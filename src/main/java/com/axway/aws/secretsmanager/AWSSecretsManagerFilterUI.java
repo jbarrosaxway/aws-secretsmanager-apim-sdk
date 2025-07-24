@@ -1,4 +1,4 @@
-package com.axway.aws.lambda;
+package com.axway.aws.secretsmanager;
 
 import java.util.Vector;
 
@@ -10,10 +10,10 @@ import com.vordel.client.manager.Images;
 import com.vordel.client.manager.filter.DefaultGUIFilter;
 import com.vordel.client.manager.wizard.VordelPage;
 
-public class AWSLambdaFilterUI extends DefaultGUIFilter {
+public class AWSSecretsManagerFilterUI extends DefaultGUIFilter {
 	public Vector<VordelPage> getPropertyPages() {
 		Vector<VordelPage> pages = new Vector<>();
-		pages.add(new AWSLambdaFilterPage());
+		pages.add(new AWSSecretsManagerFilterPage());
 		pages.add(createLogPage());
 		return pages;
 	}
@@ -23,7 +23,7 @@ public class AWSLambdaFilterUI extends DefaultGUIFilter {
 	}
 
 	public String[] getCategories() {
-		return new String[] { resolve("FILTER_GROUP_AWS_LAMBDA") };
+		return new String[] { resolve("FILTER_GROUP_AWS_SECRETSMANAGER") };
 	}
 
 	private static final String IMAGE_KEY = "amazon";
@@ -42,6 +42,6 @@ public class AWSLambdaFilterUI extends DefaultGUIFilter {
 
 
 	public String getTypeName() {
-		return resolve("AWS_LAMBDA_FILTER");
+		return resolve("AWS_SECRETSMANAGER_FILTER");
 	}
-}
+} 

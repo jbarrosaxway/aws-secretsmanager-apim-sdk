@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "========================================"
-echo "AWS Lambda APIM SDK - Linux Installer"
+echo "AWS Secrets Manager APIM SDK - Linux Installer"
 echo "========================================"
 echo
 
@@ -27,11 +27,11 @@ echo "Axway found at: $AXWAY_HOME"
 echo
 
 # Check if main JAR exists
-MAIN_JAR=$(find . -name "aws-lambda-apim-sdk-*.jar" | head -1)
+MAIN_JAR=$(find . -name "aws-secretsmanager-apim-sdk-*.jar" | head -1)
 if [ -z "$MAIN_JAR" ]; then
     echo "ERROR: Main JAR not found"
     echo
-    echo "Make sure the file aws-lambda-apim-sdk-*.jar is present"
+    echo "Make sure the file aws-secretsmanager-apim-sdk-*.jar is present"
     echo
     exit 1
 fi

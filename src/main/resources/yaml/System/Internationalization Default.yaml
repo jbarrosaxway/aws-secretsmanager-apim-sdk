@@ -1,7 +1,7 @@
 - type: InternationalizationFilter
   fields:
-    type: AWSLambdaFilter
+    type: AWSSecretsManagerFilter
   logging:
-    fatal: "Error in the AWS Lambda filter. Error: ${circuit.exception}"
-    failure: "Failed in the AWS Lambda filter"
-    success: "Success in the AWS Lambda filter"
+    fatal: "Error in the AWS Secrets Manager filter. Error: ${circuit.exception}"
+    failure: "Failed in the AWS Secrets Manager filter"
+    success: "Success in the AWS Secrets Manager filter"

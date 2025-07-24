@@ -6,6 +6,20 @@ group 'com.axway'
 version '1.0.11'
 sourceCompatibility = 1.8
 
+jar {
+    archiveBaseName = 'aws-secretsmanager-apim-sdk'
+    archiveVersion = '1.0.11'
+    manifest {
+        attributes(
+            'Implementation-Title': 'AWS Secrets Manager APIM SDK',
+            'Implementation-Version': '1.0.11',
+            'Built-By': System.getProperty('user.name'),
+            'Built-Date': new Date(),
+            'Built-JDK': System.getProperty('java.version')
+        )
+    }
+}
+
 
 task copyExternalDependencies(type: Copy) {
     description = 'Copies external dependencies to dependencies folder'
@@ -100,23 +114,22 @@ dependencies {
                 }
             }
             
-            // Check if AWS SDK Lambda is available
-            def awsLambdaJar = awsSdkModulesJars.files.find { it.name.contains('lambda') }
-            if (!awsLambdaJar) {
-                def lambdaVersion = detectedVersion ?: fallbackAwsSdkVersion
-                println "⚠️  AWS SDK Lambda not found in Axway, adding external: $lambdaVersion"
-                implementation group: 'com.amazonaws', name: 'aws-java-sdk-lambda', version: lambdaVersion
-            }
+            // AWS SDK Lambda not needed for Secrets Manager filter
+            
+            // Always add Secrets Manager dependency (not available in Axway)
+            def secretsManagerVersion = detectedVersion ?: fallbackAwsSdkVersion
+            println "🔧 Adding AWS Secrets Manager dependency: $secretsManagerVersion"
+            implementation group: 'com.amazonaws', name: 'aws-java-sdk-secretsmanager', version: secretsManagerVersion
         } else {
             println "⚠️  AWS SDK not found in Axway, using fallback: $fallbackAwsSdkVersion"
-            implementation group: 'com.amazonaws', name: 'aws-java-sdk-lambda', version: fallbackAwsSdkVersion
             implementation group: 'com.amazonaws', name: 'aws-java-sdk-core', version: fallbackAwsSdkVersion
+            implementation group: 'com.amazonaws', name: 'aws-java-sdk-secretsmanager', version: fallbackAwsSdkVersion
         }
     } else {
         // Use external AWS SDK (fallback)
         println "🔧 Using external AWS SDK: $fallbackAwsSdkVersion"
-        implementation group: 'com.amazonaws', name: 'aws-java-sdk-lambda', version: fallbackAwsSdkVersion
         implementation group: 'com.amazonaws', name: 'aws-java-sdk-core', version: fallbackAwsSdkVersion
+        implementation group: 'com.amazonaws', name: 'aws-java-sdk-secretsmanager', version: fallbackAwsSdkVersion
     }
     
     // Axway API Gateway libs
@@ -144,15 +157,15 @@ dependencies {
 // Task para instalação no Linux
 task installLinux(type: Exec) {
     group = 'Installation'
-    description = 'Installs the AWS Lambda filter on Linux'
+    description = 'Installs the AWS Secrets Manager filter on Linux'
     
     dependsOn build
     
     commandLine 'bash', 'scripts/linux/install-filter.sh'
     
     doFirst {
-        println "🚀 Installing AWS Lambda filter on Linux..."
-        println "📁 JAR: build/libs/aws-lambda-apim-sdk-1.0.1.jar"
+        println "🚀 Installing AWS Secrets Manager filter on Linux..."
+        println "📁 JAR: build/libs/aws-secretsmanager-apim-sdk-1.0.11.jar"
         println "📁 Gateway: ${axway_base}"
     }
 }
@@ -193,16 +206,16 @@ def processInternationalizationFile(def sourceFile, def destFile) {
     def sourceContent = sourceFile.text.trim()
     def destContent = destFile.exists() ? destFile.text : ""
     
-    // Check if AWSLambdaFilter already exists in the file
-    if (destContent.contains("type: AWSLambdaFilter")) {
-        println "🔄 AWSLambdaFilter already exists. Updating section..."
+    // Check if AWSSecretsManagerFilter already exists in the file
+    if (destContent.contains("type: AWSSecretsManagerFilter")) {
+        println "🔄 AWSSecretsManagerFilter already exists. Updating section..."
         
-        // Strategy: preserve other filters and only update AWSLambdaFilter
+        // Strategy: preserve other filters and only update AWSSecretsManagerFilter
         def lines = destContent.split('\n')
         def newLines = []
         def skipSection = false
         def inInternationalizationFilter = false
-        def foundAWSLambdaFilter = false
+        def foundAWSSecretsManagerFilter = false
         def outputNewContent = false
         
         for (int i = 0; i < lines.length; i++) {
@@ -217,15 +230,15 @@ def processInternationalizationFile(def sourceFile, def destFile) {
                 continue
             }
             
-            // If we are inside InternationalizationFilter, check if it contains AWSLambdaFilter
-            if (inInternationalizationFilter && trimmedLine == "type: AWSLambdaFilter") {
-                if (foundAWSLambdaFilter) {
-                    // We already found an AWSLambdaFilter section, skip this one
+            // If we are inside InternationalizationFilter, check if it contains AWSSecretsManagerFilter
+            if (inInternationalizationFilter && trimmedLine == "type: AWSSecretsManagerFilter") {
+                if (foundAWSSecretsManagerFilter) {
+                    // We already found an AWSSecretsManagerFilter section, skip this one
                     skipSection = true
                     continue
                 } else {
                     // First occurrence, skip and replace with new content
-                    foundAWSLambdaFilter = true
+                    foundAWSSecretsManagerFilter = true
                     skipSection = true
                     outputNewContent = true
                     continue
@@ -262,7 +275,7 @@ def processInternationalizationFile(def sourceFile, def destFile) {
         
         destFile.text = newLines.join('\n')
         
-        println "✅ AWSLambdaFilter section updated: ${destFile.name}"
+        println "✅ AWSSecretsManagerFilter section updated: ${destFile.name}"
         return true
     } else {
         // Add at the end if it does not exist
@@ -278,7 +291,7 @@ def processInternationalizationFile(def sourceFile, def destFile) {
 
 // Helper function to install YAML files on Windows
 def installYamlFiles(def projectPath, def taskName) {
-    println "🚀 Installing AWS Lambda filter YAML files on Windows..."
+    println "🚀 Installing AWS Secrets Manager filter YAML files on Windows..."
     println "📋 Task: ${taskName}"
     println "📁 Project: ${projectPath}"
     println ""
@@ -312,9 +325,9 @@ def showNextSteps() {
     println "1. Copy the JAR built on Linux to Windows"
     println "2. Open Policy Studio"
     println "3. Go to Window > Preferences > Runtime Dependencies"
-    println "4. Add the JAR: aws-lambda-apim-sdk-1.0.1.jar"
+    println "4. Add the JAR: aws-secretsmanager-apim-sdk-1.0.11.jar"
     println "5. Restart Policy Studio with -clean"
-    println "6. Search for 'AWS Lambda Filter' in the palette"
+    println "6. Search for 'AWS Secrets Manager Filter' in the palette"
 }
 
 // Helper function to create project directory structure
@@ -330,13 +343,13 @@ def createProjectStructure(def projectPath) {
 
 // Helper function to copy YAML files
 def copyYamlFiles(def sourceYamlDir, def metaInfDir, def systemDir) {
-    // Copy AWSLambdaFilter.yaml
-    def sourceFilterYaml = new File(sourceYamlDir, "META-INF/types/Entity/Filter/AWSFilter/AWSLambdaFilter.yaml")
-    def destFilterYaml = new File(metaInfDir, "AWSLambdaFilter.yaml")
+    // Copy AWSSecretsManagerFilter.yaml
+    def sourceFilterYaml = new File(sourceYamlDir, "META-INF/types/Entity/Filter/AWSFilter/AWSSecretsManagerFilter.yaml")
+    def destFilterYaml = new File(metaInfDir, "AWSSecretsManagerFilter.yaml")
     
     if (sourceFilterYaml.exists()) {
         destFilterYaml.text = sourceFilterYaml.text
-        println "✅ Copied: AWSLambdaFilter.yaml"
+        println "✅ Copied: AWSSecretsManagerFilter.yaml"
     } else {
         println "❌ File not found: ${sourceFilterYaml.absolutePath}"
     }
@@ -381,13 +394,13 @@ task buildJarLinux {
     dependsOn build
     
     doFirst {
-        println "🔨 Building AWS Lambda Filter JAR..."
-        println "📁 JAR: build/libs/aws-lambda-apim-sdk-1.0.1.jar"
+        println "🔨 Building AWS Secrets Manager Filter JAR..."
+        println "📁 JAR: build/libs/aws-secretsmanager-apim-sdk-1.0.11.jar"
         println "⚠️  Note: This task should be run only on Linux"
     }
     
     doLast {
-        def jarFile = new File("build/libs/aws-lambda-apim-sdk-1.0.1.jar")
+        def jarFile = new File("build/libs/aws-secretsmanager-apim-sdk-1.0.11.jar")
         if (jarFile.exists()) {
             println "✅ JAR created successfully: ${jarFile.absolutePath}"
             println "📋 For Windows: Copy this JAR to the Windows environment"
@@ -405,8 +418,8 @@ task showAwsJars {
     doLast {
         println "📦 AWS SDK JARs required for Windows:"
         println ""
-        println "🔗 aws-java-sdk-lambda-1.12.314.jar:"
-        println "   https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-lambda/1.12.314/aws-java-sdk-lambda-1.12.314.jar"
+        println "🔗 aws-java-sdk-secretsmanager-1.12.314.jar:"
+        println "   https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-secretsmanager/1.12.314/aws-java-sdk-secretsmanager-1.12.314.jar"
         println ""
         println "🔗 aws-java-sdk-core-1.12.314.jar:"
         println "   https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-core/1.12.314/aws-java-sdk-core-1.12.314.jar"
@@ -445,8 +458,8 @@ task showProjectInfo {
     description = 'Shows detailed project information'
     
     doLast {
-        println "📋 AWS Lambda APIM SDK Project Information"
-        println "=============================================="
+        println "📋 AWS Secrets Manager APIM SDK Project Information"
+        println "=================================================="
         println ""
         println "🏷️  Current version: ${version}"
         println "📦 Group: ${group}"
@@ -459,12 +472,12 @@ task showProjectInfo {
         println "  - docs/              # Documentation"
         println ""
         println "🔗 Main dependencies:"
-        println "  - AWS SDK Lambda: 1.12.314"
+        println "  - AWS SDK Secrets Manager: 1.12.314"
         println "  - AWS SDK Core: 1.12.314"
         println "  - Axway API Gateway: 7.7.0.20240830"
         println ""
         println "🚀 Features:"
-        println "  - AWS Lambda filter for Axway API Gateway"
+        println "  - AWS Secrets Manager filter for Axway API Gateway"
         println "  - Support for multiple Axway versions"
         println "  - Automated installation (Linux/Windows)"
         println "  - Automatic semantic versioning"

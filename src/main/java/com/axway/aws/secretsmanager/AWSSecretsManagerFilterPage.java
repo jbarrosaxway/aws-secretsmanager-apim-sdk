@@ -1,17 +1,17 @@
-package com.axway.aws.lambda;
+package com.axway.aws.secretsmanager;
 
 import org.eclipse.swt.widgets.Composite;
 
 import com.vordel.client.manager.wizard.VordelPage;
 
-public class AWSLambdaFilterPage extends VordelPage {
+public class AWSSecretsManagerFilterPage extends VordelPage {
 
-	public AWSLambdaFilterPage() {
-		super("AWSLambdaPage");
+	public AWSSecretsManagerFilterPage() {
+		super("AWSSecretsManagerPage");
 
 
-		setTitle(resolve("AWS_LAMBDA_PAGE"));
-		setDescription(resolve("AWS_LAMBDA_PAGE_DESCRIPTION"));
+		setTitle(resolve("AWS_SECRETSMANAGER_PAGE"));
+		setDescription(resolve("AWS_SECRETSMANAGER_PAGE_DESCRIPTION"));
 		setPageComplete(true);
 	}
 
@@ -24,8 +24,8 @@ public class AWSLambdaFilterPage extends VordelPage {
 	}
 
 	public void createControl(Composite parent) {
-		Composite panel = render(parent, getClass().getResourceAsStream("aws_lambda.xml"));
+		Composite panel = render(parent, getClass().getResourceAsStream("aws_secretsmanager.xml"));
 		setControl(panel);
 		setPageComplete(true);
 	}
-}
+} 

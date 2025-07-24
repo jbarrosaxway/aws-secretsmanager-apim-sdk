@@ -1,16 +1,16 @@
 #!/bin/bash
 
-# AWS Lambda Filter installation script for Axway API Gateway (Linux)
+# AWS Secrets Manager Filter installation script for Axway API Gateway (Linux)
 # Author: Assistant
 # Date: $(date)
 # Note: YAML files are organized in src/main/resources/yaml/
 # For Windows, use: install-filter-windows.ps1 or install-filter-windows.cmd
 
 AXWAY_DIR="/opt/axway/Axway-7.7.0.20240830"
-JAR_FILE="build/libs/aws-lambda-apim-sdk-1.0.1.jar"
+JAR_FILE="build/libs/aws-secretsmanager-apim-sdk-1.0.11.jar"
 EXT_LIB_DIR="$AXWAY_DIR/apigateway/groups/group-2/instance-1/ext/lib"
 
-echo "=== AWS Lambda Filter Installation for Axway API Gateway ==="
+echo "=== AWS Secrets Manager Filter Installation for Axway API Gateway ==="
 echo "Axway directory: $AXWAY_DIR"
 echo "JAR: $JAR_FILE"
 echo ""
@@ -57,12 +57,12 @@ echo ""
 echo "📝 Next steps:"
 echo "1. Restart Axway API Gateway"
 echo "2. In Policy Studio, go to Window > Preferences > Runtime Dependencies"
-echo "3. Add the JAR: $EXT_LIB_DIR/aws-lambda-apim-sdk-1.0.1.jar"
+echo "3. Add the JAR: $EXT_LIB_DIR/aws-secretsmanager-apim-sdk-1.0.11.jar"
 echo "4. Restart Policy Studio with the -clean option"
-echo "5. The 'AWS Lambda Filter' will be available in the filter palette"
+echo "5. The 'AWS Secrets Manager Filter' will be available in the filter palette"
 echo ""
 echo "🔧 To check if the filter is working:"
 echo "- Open Policy Studio"
 echo "- Create a new policy"
-echo "- Search for 'AWS Lambda' in the filter palette"
+echo "- Search for 'AWS Secrets Manager' in the filter palette"
 echo "- Configure the filter with the required parameters" 

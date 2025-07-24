@@ -82,11 +82,11 @@ if %errorlevel% equ 0 (
 )
 goto :eof
 
-REM 1. Copy AWSLambdaFilter.yaml
+REM 1. Copy AWSSecretsManagerFilter.yaml
 set sourceFilter=%YAML_SOURCE_DIR%\META-INF\types\Entity\Filter\AWSFilter
 set destFilter=%POLICY_STUDIO_PROJECT%\META-INF\types\Entity\Filter\AWSFilter
 
-call :CopyYamlFiles "%sourceFilter%" "%destFilter%" "AWSLambdaFilter.yaml"
+call :CopyYamlFiles "%sourceFilter%" "%destFilter%" "AWSSecretsManagerFilter.yaml"
 set filterSuccess=%success%
 
 REM 2. Add content to Internationalization Default.yaml
@@ -112,19 +112,19 @@ if %filterSuccess% equ 1 if %systemSuccess% equ 1 (
     echo 1. Open the project in Policy Studio
     echo 2. In Policy Studio, go to Window ^> Preferences ^> Runtime Dependencies
     echo 3. Add AWS SDK JARs if needed:
-    echo    - aws-java-sdk-lambda-1.12.314.jar
+    echo    - aws-java-sdk-secretsmanager-1.12.314.jar
     echo    - aws-java-sdk-core-1.12.314.jar
     echo 4. Restart Policy Studio with the -clean option
-    echo 5. The 'AWS Lambda Filter' will be available in the filter palette
+    echo 5. The 'AWS Secrets Manager Filter' will be available in the filter palette
     echo.
     echo  [36mTo check if the filter is working: [0m
     echo - Open Policy Studio
     echo - Create a new policy
-    echo - Search for 'AWS Lambda' in the filter palette
+    echo - Search for 'AWS Secrets Manager' in the filter palette
     echo - Configure the filter with the required parameters
     echo.
     echo  [33mCopied files: [0m
-    echo - %destFilter%\AWSLambdaFilter.yaml
+    echo - %destFilter%\AWSSecretsManagerFilter.yaml
     echo - %destSystem%\Internationalization Default.yaml
     echo.
     echo  [36mTip: Adjust the POLICY_STUDIO_PROJECT variable in the script if your project is in another location [0m
