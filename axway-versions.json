@@ -2,19 +2,19 @@
   "versions": {
     "7.7.0.20230830": {
       "name": "Axway API Gateway 7.7.0.20230830",
-      "docker_image": "axwayjbarros/aws-secretsmanager-apim-sdk:7.7.0.20230830",
+      "docker_image": "axwayjbarros/aws-lambda-apim-sdk:7.7.0.20230830",
       "base_path": "/opt/Axway",
       "description": "Versão estável de agosto 2023 - AWS Secrets Manager SDK detectado automaticamente"
     },
     "7.7.0.20240830": {
       "name": "Axway API Gateway 7.7.0.20240830",
-      "docker_image": "axwayjbarros/aws-secretsmanager-apim-sdk:7.7.0.20240830",
+      "docker_image": "axwayjbarros/aws-lambda-apim-sdk:7.7.0.20240830",
       "base_path": "/opt/Axway",
       "description": "Versão estável de agosto 2024 - AWS Secrets Manager SDK detectado automaticamente"
     },
     "7.7.0.20250530": {
       "name": "Axway API Gateway 7.7.0.20250530",
-      "docker_image": "axwayjbarros/aws-secretsmanager-apim-sdk:7.7.0.20250530",
+      "docker_image": "axwayjbarros/aws-lambda-apim-sdk:7.7.0.20250530",
       "base_path": "/opt/Axway",
       "description": "Versão estável de maio 2025 - AWS Secrets Manager SDK detectado automaticamente"
     }
