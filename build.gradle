@@ -179,7 +179,7 @@ task installWindows {
         println "📋 Note: The JAR must be built on Linux and copied manually"
         println ""
         println "📂 Policy Studio project examples:"
-        println "   C:\\Users\\jbarros\\apiprojects\\DIGIO-POC-AKS"
+        println "   C:\\Users\\jbarros\\apiprojects\\EXAMPLE-POC-AKS"
         println "   C:\\Users\\jbarros\\apiprojects\\POC-CUSTOM-FILTER"
         println "   C:\\Projects\\API-Gateway\\MyProject"
         println ""
@@ -372,7 +372,7 @@ task installWindowsToProject {
         
         if (!projectPath) {
             // If not specified, request interactively
-            projectPath = System.console()?.readLine("📂 Enter the Policy Studio project path (ex: C:\\Users\\jbarros\\apiprojects\\DIGIO-POC-AKS): ")
+            projectPath = System.console()?.readLine("📂 Enter the Policy Studio project path (ex: C:\\Users\\jbarros\\apiprojects\\EXAMPLE-POC-AKS): ")
             
             if (!projectPath) {
                 throw new GradleException("❌ Project path not provided! Use: -Dproject.path=C:\\path\\to\\project")

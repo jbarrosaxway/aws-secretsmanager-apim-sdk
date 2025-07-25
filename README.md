@@ -70,7 +70,7 @@ Releases are automatically created on GitHub and include:
 # Extract the release ZIP
 # Navigate to the extracted folder
 # Run the Gradle task:
-.\gradlew "-Dproject.path=C:\Users\jbarros\apiprojects\DIGIO-POC-AKS-NEW" installWindowsToProject
+.\gradlew "-Dproject.path=C:\Users\jbarros\apiprojects\EXAMPLE-POC-AKS-NEW" installWindowsToProject
 ```
 
 **Linux:**
@@ -128,13 +128,13 @@ The project supports **dynamic configuration** of the Axway API Gateway path:
 ./gradlew installWindows
 
 # Install in specific project (with path)
-./gradlew "-Dproject.path=C:\Users\jbarros\apiprojects\DIGIO-POC-AKS" installWindowsToProject
+./gradlew "-Dproject.path=C:\Users\jbarros\apiprojects\EXAMPLE-POC-AKS" installWindowsToProject
 
 # Interactive installation (if path not specified)
 ./gradlew installWindowsToProject
 ```
 
-> 📖 **Complete Windows Guide**: See **[📋 Windows Installation Guide](docs/INSTALACAO_WINDOWS.md)** for detailed instructions.
+<!-- > 📖 **Complete Windows Guide**: See **[📋 Windows Installation Guide](docs/INSTALACAO_WINDOWS.md)** for detailed instructions. (Arquivo não existe) -->
 
 ### 🐳 **Docker**
 
@@ -280,8 +280,12 @@ The project uses the image for automated build:
 This project has complete documentation organized by topic:
 
 ### 🚀 **Installation Guides**
-- **[📋 Windows Installation Guide](docs/WINDOWS_INSTALLATION.md)** - Detailed instructions for Windows
-- **[🔧 Dynamic Configuration](docs/DYNAMIC_CONFIGURATION.md)** - How to configure Axway paths dynamically
+<!-- - **[📋 Windows Installation Guide](docs/INSTALACAO_WINDOWS.md)** - Detailed instructions for Windows (Arquivo não existe) -->
+<!-- - **[🔧 Dynamic Configuration](docs/DYNAMIC_CONFIGURATION.md)** - How to configure Axway paths dynamically (Arquivo não existe) -->
+
+### 🧪 **Testing and Usage**
+- **[🔐 Test Guide](docs/README-USO-TESTE.md)** - Complete testing and usage guide for AWS Secrets Manager
+- **[🔐 Test Scripts Guide](docs/README-TEST-SECRETS.md)** - Guide for AWS Secrets Manager test scripts
 
 ### 🔧 **Development and Build**
 - **[🗳️ Release Guide](docs/RELEASE_GUIDE.md)** - How to create releases and versioning
@@ -290,8 +294,8 @@ This project has complete documentation organized by topic:
 - **[🔧 Scripts Reference](docs/SCRIPTS_REFERENCE.md)** - Documentation of essential scripts
 
 ### 📝 **Technical Documentation**
-- **[🔍 Field Updates](docs/FILTER_FIELD_UPDATES.md)** - History of filter field changes
-- **[🔐 AWS Authentication Improvements](docs/AWS_AUTHENTICATION_IMPROVEMENTS.md)** - Advanced authentication settings
+<!-- - **[🔍 Field Updates](docs/FILTER_FIELD_UPDATES.md)** - History of filter field changes (Arquivo não existe) -->
+<!-- - **[🔐 AWS Authentication Improvements](docs/AWS_AUTHENTICATION_IMPROVEMENTS.md)** - Advanced authentication settings (Arquivo não existe) -->
 
 ### 📋 **Documentation Structure**
 ```
@@ -299,7 +303,9 @@ docs/
 ├── RELEASE_GUIDE.md                    # Release guide
 ├── SEMANTIC_VERSIONING.md              # Semantic versioning
 ├── AUTOMATIC_RELEASE_SYSTEM.md         # Automatic release system
-└── SCRIPTS_REFERENCE.md                # Scripts reference
+├── SCRIPTS_REFERENCE.md                # Scripts reference
+├── README-TEST-SECRETS.md              # AWS Secrets Manager test scripts guide
+└── README-USO-TESTE.md                 # Complete testing and usage guide
 ```
 
 ---

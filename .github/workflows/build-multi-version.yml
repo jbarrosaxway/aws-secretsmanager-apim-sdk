@@ -343,7 +343,7 @@ jobs:
           echo "" >> "$ZIP_DIR/README.md"
           echo "### Installation via Gradle (Windows)" >> "$ZIP_DIR/README.md"
           echo "1. Open the command prompt in the ZIP directory" >> "$ZIP_DIR/README.md"
-          echo "2. Run: .\\gradlew \"-Dproject.path=C:\\Users\\jbarros\\apiprojects\\DIGIO-POC-AKS-NEW\" installWindowsToProject" >> "$ZIP_DIR/README.md"
+          echo "2. Run: .\\gradlew \"-Dproject.path=C:\\Users\\jbarros\\apiprojects\\EXAMPLE-POC-AKS-NEW\" installWindowsToProject" >> "$ZIP_DIR/README.md"
           echo "3. The path will be used automatically without interaction" >> "$ZIP_DIR/README.md"
           echo "" >> "$ZIP_DIR/README.md"
           echo "## Included files" >> "$ZIP_DIR/README.md"

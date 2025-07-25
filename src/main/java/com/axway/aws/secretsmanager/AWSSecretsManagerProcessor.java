@@ -123,103 +123,107 @@ public class AWSSecretsManagerProcessor extends MessageProcessor {
 	}
 
 	private AWSCredentialsProvider getCredentialsProvider(ConfigContext ctx, Entity entity) throws EntityStoreException {
-		String credentialTypeValue = entity.getStringValue("credentialType");
+		String credentialTypeValue = credentialType.getLiteral();
+		Trace.info("=== Credentials Provider Debug ===");
+		Trace.info("Credential Type Value: " + credentialTypeValue);
 		
-		if ("local".equals(credentialTypeValue)) {
-			// Local credentials (access key + secret key)
-			String awsCredentialValue = entity.getStringValue("awsCredential");
-			if (awsCredentialValue != null && !awsCredentialValue.trim().isEmpty()) {
-				String[] parts = awsCredentialValue.split(":");
-				if (parts.length == 2) {
-					return new AWSStaticCredentialsProvider(
-						new BasicAWSCredentials(parts[0].trim(), parts[1].trim()));
-				} else if (parts.length == 3) {
-					return new AWSStaticCredentialsProvider(
-						new BasicSessionCredentials(parts[0].trim(), parts[1].trim(), parts[2].trim()));
-				}
-			}
-			Trace.info("Invalid local credentials format, using default provider chain");
-			return new DefaultAWSCredentialsProviderChain();
-			
+		if ("iam".equals(credentialTypeValue)) {
+			// Use IAM Role (EC2 Instance Profile or ECS Task Role)
+			Trace.info("Using IAM Role credentials (Instance Profile/Task Role)");
+			return new EC2ContainerCredentialsProviderWrapper();
 		} else if ("file".equals(credentialTypeValue)) {
-			// Credentials from file
-			String credentialsFilePathValue = entity.getStringValue("credentialsFilePath");
-			if (credentialsFilePathValue != null && !credentialsFilePathValue.trim().isEmpty()) {
+			// Use credentials file
+			Trace.info("Credentials Type is 'file', checking credentialsFilePath...");
+			String filePath = credentialsFilePath.getLiteral();
+			Trace.info("File Path: " + filePath);
+			Trace.info("File Path is null: " + (filePath == null));
+			Trace.info("File Path is empty: " + (filePath != null && filePath.trim().isEmpty()));
+			if (filePath != null && !filePath.trim().isEmpty()) {
 				try {
-					return new com.amazonaws.auth.PropertiesFileCredentialsProvider(credentialsFilePathValue);
+					Trace.info("Using AWS credentials file: " + filePath);
+					// Create ProfileCredentialsProvider with file path and default profile
+					return new ProfileCredentialsProvider(filePath, "default");
 				} catch (Exception e) {
-					Trace.info("Failed to load credentials from file: " + credentialsFilePathValue + ", using default provider chain");
+					Trace.error("Error loading credentials file: " + e.getMessage());
+					Trace.info("Falling back to DefaultAWSCredentialsProviderChain");
+					return new DefaultAWSCredentialsProviderChain();
 				}
+			} else {
+				Trace.info("Credentials file path not specified, using DefaultAWSCredentialsProviderChain");
+				return new DefaultAWSCredentialsProviderChain();
 			}
-			return new DefaultAWSCredentialsProviderChain();
-			
-		} else if ("iam".equals(credentialTypeValue)) {
-			// IAM Role (use default provider chain)
-			return new DefaultAWSCredentialsProviderChain();
-			
-		} else if ("profile".equals(credentialTypeValue)) {
-			// AWS Profile
-			String awsProfileValue = entity.getStringValue("awsProfile");
-			if (awsProfileValue != null && !awsProfileValue.trim().isEmpty()) {
-				return new ProfileCredentialsProvider(awsProfileValue);
-			}
-			Trace.info("Profile name not specified, using default provider chain");
-			return new DefaultAWSCredentialsProviderChain();
-			
 		} else {
-			// Default: use provider chain
-			return new DefaultAWSCredentialsProviderChain();
+			// Use explicit credentials via AWSFactory (following Lambda pattern)
+			Trace.info("Using explicit AWS credentials via AWSFactory");
+			try {
+				AWSCredentials awsCredentials = AWSFactory.getCredentials(ctx, entity);
+				Trace.info("AWSFactory.getCredentials() successful");
+				return getAWSCredentialsProvider(awsCredentials);
+			} catch (Exception e) {
+				Trace.error("Error getting explicit credentials: " + e.getMessage());
+				Trace.info("Falling back to DefaultAWSCredentialsProviderChain");
+				return new DefaultAWSCredentialsProviderChain();
+			}
 		}
 	}
 
 	private ClientConfiguration createClientConfiguration(ConfigContext ctx, Entity entity) throws EntityStoreException {
-		ClientConfiguration config = new ClientConfiguration();
+		ClientConfiguration clientConfig = new ClientConfiguration();
 		
-		// Set default values
-		config.setConnectionTimeout(5000);
-		config.setSocketTimeout(10000);
-		config.setMaxConnections(50);
-		config.setProtocol(Protocol.HTTPS);
-		
-		// Apply custom configuration if provided
-		String clientConfigurationValue = entity.getStringValue("clientConfiguration");
-		if (clientConfigurationValue != null && !clientConfigurationValue.trim().isEmpty()) {
-			String[] lines = clientConfigurationValue.split("\n");
-			for (String line : lines) {
-				line = line.trim();
-				if (line.startsWith("protocol=")) {
-					String protocol = line.substring("protocol=".length()).trim();
-					if ("http".equalsIgnoreCase(protocol)) {
-						config.setProtocol(Protocol.HTTP);
-					} else if ("https".equalsIgnoreCase(protocol)) {
-						config.setProtocol(Protocol.HTTPS);
-					}
-				} else if (line.startsWith("connectionTimeout=")) {
-					try {
-						int timeout = Integer.parseInt(line.substring("connectionTimeout=".length()).trim());
-						config.setConnectionTimeout(timeout);
-					} catch (NumberFormatException e) {
-						Trace.info("Invalid connectionTimeout value: " + line);
-					}
-				} else if (line.startsWith("socketTimeout=")) {
-					try {
-						int timeout = Integer.parseInt(line.substring("socketTimeout=".length()).trim());
-						config.setSocketTimeout(timeout);
-					} catch (NumberFormatException e) {
-						Trace.info("Invalid socketTimeout value: " + line);
-					}
-				} else if (line.startsWith("maxConnections=")) {
-					try {
-						int maxConn = Integer.parseInt(line.substring("maxConnections=".length()).trim());
-						config.setMaxConnections(maxConn);
-					} catch (NumberFormatException e) {
-						Trace.info("Invalid maxConnections value: " + line);
-					}
-				}
-			}
+		if (entity == null) {
+			Trace.debug("using empty default ClientConfiguration");
+			return clientConfig;
 		}
 		
-		return config;
+		// Apply configuration settings (following Lambda pattern exactly)
+		if (containsKey(entity, "connectionTimeout")) {
+			clientConfig.setConnectionTimeout(entity.getIntegerValue("connectionTimeout"));
+		}
+		if (containsKey(entity, "maxConnections")) {
+			clientConfig.setMaxConnections(entity.getIntegerValue("maxConnections"));
+		}
+		if (containsKey(entity, "maxErrorRetry")) {
+			clientConfig.setMaxErrorRetry(entity.getIntegerValue("maxErrorRetry"));
+		}
+		if (containsKey(entity, "protocol")) {
+			clientConfig.setProtocol(Protocol.valueOf(entity.getStringValue("protocol")));
+		}
+		if (containsKey(entity, "socketTimeout")) {
+			clientConfig.setSocketTimeout(entity.getIntegerValue("socketTimeout"));
+		}
+		if (containsKey(entity, "userAgent")) {
+			clientConfig.setUserAgent(entity.getStringValue("userAgent"));
+		}
+		if (containsKey(entity, "proxyHost")) {
+			clientConfig.setProxyHost(entity.getStringValue("proxyHost"));
+		}
+		if (containsKey(entity, "proxyPort")) {
+			clientConfig.setProxyPort(entity.getIntegerValue("proxyPort"));
+		}
+		if (containsKey(entity, "proxyUsername")) {
+			clientConfig.setProxyUsername(entity.getStringValue("proxyUsername"));
+		}
+		if (containsKey(entity, "proxyPassword")) {
+			try {
+				byte[] proxyPasswordBytes = ctx.getCipher().decrypt(entity.getEncryptedValue("proxyPassword"));
+				clientConfig.setProxyPassword(new String(proxyPasswordBytes));
+			} catch (GeneralSecurityException e) {
+				Trace.error("Error decrypting proxy password: " + e.getMessage());
+			}
+		}
+		if (containsKey(entity, "proxyDomain")) {
+			clientConfig.setProxyDomain(entity.getStringValue("proxyDomain"));
+		}
+		if (containsKey(entity, "proxyWorkstation")) {
+			clientConfig.setProxyWorkstation(entity.getStringValue("proxyWorkstation"));
+		}
+		if (containsKey(entity, "socketSendBufferSizeHint") && containsKey(entity, "socketReceiveBufferSizeHint")) {
+			clientConfig.setSocketBufferSizeHints(
+				entity.getIntegerValue("socketSendBufferSizeHint"),
+				entity.getIntegerValue("socketReceiveBufferSizeHint"));
+		}
+		
+		return clientConfig;
 	}
 
 	private boolean containsKey(Entity entity, String fieldName) {
@@ -242,22 +246,38 @@ public class AWSSecretsManagerProcessor extends MessageProcessor {
 	@Override
 	public boolean invoke(Circuit circuit, Message message) throws CircuitAbortException {
 		try {
-			// Get dynamic values
-			String secretNameValue = secretName != null ? secretName.substitute(message) : null;
-			String regionValue = secretRegion != null ? secretRegion.substitute(message) : null;
-			String maxRetriesValue = maxRetries != null ? maxRetries.substitute(message) : "3";
-			String retryDelayValue = retryDelay != null ? retryDelay.substitute(message) : "1000";
-			
-			// Set default region if not specified
-			if (regionValue == null || regionValue.trim().isEmpty()) {
-				regionValue = "us-east-1";
+			if (secretsManagerClientBuilder == null) {
+				Trace.error("AWS Secrets Manager client builder was not configured");
+				message.put("aws.secretsmanager.error", "AWS Secrets Manager client builder was not configured");
+				return false;
 			}
 			
+			// Get dynamic values using selectors (following Lambda pattern)
+			String secretNameValue = secretName.substitute(message);
+			String regionValue = secretRegion.substitute(message);
+			String maxRetriesValue = maxRetries.substitute(message);
+			String retryDelayValue = retryDelay.substitute(message);
+			String credentialTypeValue = credentialType.substitute(message);
+			String credentialsFilePathValue = credentialsFilePath.substitute(message);
+
 			Trace.info("=== Secrets Manager Invocation Debug ===");
 			Trace.info("Secret Name: " + secretNameValue);
 			Trace.info("Region: " + regionValue);
 			Trace.info("Max Retries: " + maxRetriesValue);
 			Trace.info("Retry Delay: " + retryDelayValue);
+			Trace.info("Credential Type: " + credentialTypeValue);
+			Trace.info("Credentials File Path: " + credentialsFilePathValue);
+			
+			// Set default values
+			if (maxRetriesValue == null || maxRetriesValue.trim().isEmpty()) {
+				maxRetriesValue = "3";
+			}
+			if (retryDelayValue == null || retryDelayValue.trim().isEmpty()) {
+				retryDelayValue = "1000";
+			}
+			if (credentialTypeValue == null || credentialTypeValue.trim().isEmpty()) {
+				credentialTypeValue = "local";
+			}
 			
 			// Validate required fields
 			if (secretNameValue == null || secretNameValue.trim().isEmpty()) {
@@ -281,30 +301,21 @@ public class AWSSecretsManagerProcessor extends MessageProcessor {
 				Trace.info("Invalid retryDelay value, using default 1000");
 			}
 			
-			// Build client with current region
-			AWSSecretsManagerClientBuilder clientBuilder = AWSSecretsManagerClientBuilder.standard()
-				.withRegion(regionValue);
+			Trace.info("Invoking Secrets Manager with retry...");
 			
-			// Apply credentials and configuration
-			AWSCredentialsProvider credentialsProvider = getCredentialsProvider(null, null);
-			if (credentialsProvider != null) {
-				clientBuilder.withCredentials(credentialsProvider);
-			}
-			
-			ClientConfiguration config = createClientConfiguration(null, null);
-			if (config != null) {
-				clientBuilder.withClientConfiguration(config);
-			}
-			
-			AWSSecretsManager secretsManager = clientBuilder.build();
+			Exception lastException = null;
 			
 			// Try to get secret with retry logic
 			GetSecretValueResult result = null;
-			Exception lastException = null;
 			
-			for (int attempt = 0; attempt <= maxRetriesInt; attempt++) {
+			for (int attempt = 1; attempt <= maxRetriesInt; attempt++) {
 				try {
-					Trace.info("Attempting to get secret: " + secretNameValue + " (attempt " + (attempt + 1) + ")");
+					Trace.info("Attempt " + attempt + " of " + maxRetriesInt);
+					
+					// Create Secrets Manager client with region (following Lambda pattern)
+					AWSSecretsManager secretsManager = secretsManagerClientBuilder.withRegion(regionValue).build();
+					
+					Trace.info("Attempting to get secret: " + secretNameValue + " (attempt " + attempt + ")");
 					
 					GetSecretValueRequest request = new GetSecretValueRequest()
 						.withSecretId(secretNameValue);
@@ -336,7 +347,7 @@ public class AWSSecretsManagerProcessor extends MessageProcessor {
 					
 				} catch (InternalServiceErrorException e) {
 					lastException = e;
-					Trace.info("Internal service error for secret: " + secretNameValue + " (attempt " + (attempt + 1) + ") - " + e.getMessage());
+					Trace.info("Internal service error for secret: " + secretNameValue + " (attempt " + attempt + ") - " + e.getMessage());
 					
 					if (attempt < maxRetriesInt) {
 						try {
@@ -349,7 +360,7 @@ public class AWSSecretsManagerProcessor extends MessageProcessor {
 					
 				} catch (Exception e) {
 					lastException = e;
-					Trace.info("Unexpected error for secret: " + secretNameValue + " (attempt " + (attempt + 1) + ") - " + e.getMessage());
+					Trace.info("Unexpected error for secret: " + secretNameValue + " (attempt " + attempt + ") - " + e.getMessage());
 					
 					if (attempt < maxRetriesInt) {
 						try {
@@ -363,7 +374,7 @@ public class AWSSecretsManagerProcessor extends MessageProcessor {
 			}
 			
 			// If we get here, all attempts failed
-			String errorMsg = "Failed to retrieve secret after " + (maxRetriesInt + 1) + " attempts";
+			String errorMsg = "Failed to retrieve secret after " + maxRetriesInt + " attempts";
 			if (lastException != null) {
 				errorMsg += ": " + lastException.getMessage();
 			}
