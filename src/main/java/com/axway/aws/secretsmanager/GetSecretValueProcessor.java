@@ -53,7 +53,6 @@ public class GetSecretValueProcessor extends MessageProcessor {
 	protected Selector<String> awsCredential;
 	protected Selector<String> clientConfiguration;
 	protected Selector<String> credentialsFilePath;
-	protected Selector<String> awsProfile;
 	
 	// AWS Secrets Manager client builder
 	protected AWSSecretsManagerClientBuilder secretsManagerClientBuilder;
@@ -77,7 +76,6 @@ public class GetSecretValueProcessor extends MessageProcessor {
 		this.awsCredential = new Selector(entity.getStringValue("awsCredential"), String.class);
 		this.clientConfiguration = new Selector(entity.getStringValue("clientConfiguration"), String.class);
 		this.credentialsFilePath = new Selector(entity.getStringValue("credentialsFilePath") != null ? entity.getStringValue("credentialsFilePath") : "", String.class);
-		this.awsProfile = new Selector(entity.getStringValue("awsProfile") != null ? entity.getStringValue("awsProfile") : "", String.class);
 		
 		// Get client configuration (following Lambda pattern exactly)
 		Entity clientConfig = ctx.getEntity(entity.getReferenceValue("clientConfiguration"));
@@ -94,7 +92,6 @@ public class GetSecretValueProcessor extends MessageProcessor {
 		Trace.info("AWS Credential: " + (awsCredential != null ? awsCredential.getLiteral() : "dynamic"));
 		Trace.info("Client Configuration: " + (clientConfiguration != null ? clientConfiguration.getLiteral() : "dynamic"));
 		Trace.info("Credentials File Path: " + (credentialsFilePath != null ? credentialsFilePath.getLiteral() : "dynamic"));
-		Trace.info("AWS Profile: " + (awsProfile != null ? awsProfile.getLiteral() : "dynamic"));
 		Trace.info("Client Config Entity: " + (clientConfig != null ? "configured" : "default"));
 	}
 
