@@ -22,7 +22,7 @@ This document lists all essential scripts maintained in the project and their fu
 - **Function:** Build the JAR using the published Docker image
 - **Usage:** Manual (development)
 - **Command:** `./scripts/build-with-docker-image.sh`
-- **Output:** JAR in `build/libs/aws-lambda-apim-sdk-*.jar`
+- **Output:** JAR in `build/libs/aws-secretsmanager-apim-sdk-*.jar`
 
 #### `scripts/generate-release-notes.sh`
 - **Function:** Generates intelligent release notes based on commit history

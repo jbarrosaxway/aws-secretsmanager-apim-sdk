@@ -10,10 +10,13 @@ import com.vordel.client.manager.Images;
 import com.vordel.client.manager.filter.DefaultGUIFilter;
 import com.vordel.client.manager.wizard.VordelPage;
 
-public class AWSSecretsManagerFilterUI extends DefaultGUIFilter {
+/**
+ * UI class for GetSecretValueFilter in Policy Studio
+ */
+public class GetSecretValueFilterUI extends DefaultGUIFilter {
 	public Vector<VordelPage> getPropertyPages() {
 		Vector<VordelPage> pages = new Vector<>();
-		pages.add(new AWSSecretsManagerFilterPage());
+		pages.add(new GetSecretValueFilterPage());
 		pages.add(createLogPage());
 		return pages;
 	}

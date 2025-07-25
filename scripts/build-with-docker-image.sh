@@ -1,15 +1,17 @@
 #!/bin/bash
 
-# Script to build the JAR using the published image
-# axwayjbarros/aws-lambda-apim-sdk:1.0.0
-# 
-# This image contains all Axway API Gateway libraries
-# for building the project, not for runtime.
+# Build JAR using Docker image
+# axwayjbarros/aws-secretsmanager-apim-sdk:1.0.0
 
 set -e
 
-echo "🚀 Building JAR using Docker image: axwayjbarros/aws-lambda-apim-sdk:1.0.0"
-echo "📋 Note: This image contains only the libraries for build, not for runtime"
+echo "🚀 Building JAR using Docker image: axwayjbarros/aws-secretsmanager-apim-sdk:1.0.0"
+echo "📋 Docker image details:"
+echo "- Image: axwayjbarros/aws-secretsmanager-apim-sdk:1.0.0"
+echo "- Base: Axway API Gateway 7.7.0.20240830"
+echo "- Java: OpenJDK 11"
+echo "- Gradle: Latest"
+echo "- AWS SDK: 1.12.314"
 echo ""
 
 # Check if Docker is running
@@ -26,7 +28,7 @@ fi
 
 # Pull the image if needed
 echo "📥 Checking Docker image..."
-docker pull axwayjbarros/aws-lambda-apim-sdk:1.0.0
+docker pull axwayjbarros/aws-secretsmanager-apim-sdk:1.0.0
 
 # Clean previous build
 echo ""
@@ -47,9 +49,8 @@ echo "📁 Build will be saved in: $(pwd)/build/libs/"
 docker run --rm \
   -v "$(pwd):/workspace" \
   -v "$(pwd)/build:/workspace/build" \
-  -v "$(pwd)/.gradle:/workspace/.gradle" \
   -w /workspace \
-  axwayjbarros/aws-lambda-apim-sdk:1.0.0 \
+  axwayjbarros/aws-secretsmanager-apim-sdk:1.0.0 \
   bash -c "
     echo '🔧 Setting up environment...'
     export JAVA_HOME=/opt/java/openjdk-11
@@ -107,7 +108,7 @@ else
     echo ""
     echo "💡 Troubleshooting suggestions:"
     echo "1. Check if Docker is running"
-    echo "2. Check if the image exists: docker images axwayjbarros/aws-lambda-apim-sdk:1.0.0"
-    echo "3. Try pulling the image: docker pull axwayjbarros/aws-lambda-apim-sdk:1.0.0"
+    echo "2. Check if the image exists: docker images axwayjbarros/aws-secretsmanager-apim-sdk:1.0.0"
+    echo "3. Try pulling the image: docker pull axwayjbarros/aws-secretsmanager-apim-sdk:1.0.0"
     echo "4. Check for disk space"
 fi 

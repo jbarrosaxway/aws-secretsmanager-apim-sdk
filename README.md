@@ -464,14 +464,14 @@ aws-secretsmanager-apim-sdk/
 │   └── main/
 │       ├── java/                            # Java source code
 │       │   └── com/axway/aws/secretsmanager/
-│       │       ├── AWSSecretsManagerFilter.java
-│       │       ├── AWSSecretsManagerProcessor.java
-│       │       ├── AWSSecretsManagerFilterUI.java
-│       │       └── AWSSecretsManagerFilterPage.java
+│       │       ├── GetSecretValueFilter.java
+│       │       ├── GetSecretValueProcessor.java
+│       │       ├── GetSecretValueFilterUI.java
+│       │       └── GetSecretValueFilterPage.java
 │       └── resources/
 │           ├── fed/
-│           │   ├── AWSSecretsManagerDesc.xml
-│           │   └── AWSSecretsManagerTypeSet.xml
+│           │   ├── GetSecretValueDesc.xml
+│           │   └── GetSecretValueTypeSet.xml
 │           ├── com/axway/aws/secretsmanager/
 │           │   ├── aws_secretsmanager.xml
 │           │   └── resources.properties
@@ -483,7 +483,7 @@ aws-secretsmanager-apim-sdk/
 │                       └── Entity/
 │                           └── Filter/
 │                               └── AWSFilter/
-│                                   └── AWSSecretsManagerFilter.yaml
+│                                   └── GetSecretValueFilter.yaml
 └── build/                                   # Build output (generated)
     └── libs/
         └── aws-secretsmanager-apim-sdk-<version>.jar

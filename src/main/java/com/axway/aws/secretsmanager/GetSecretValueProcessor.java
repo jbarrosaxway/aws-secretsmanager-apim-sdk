@@ -38,7 +38,11 @@ import com.vordel.trace.Trace;
 import java.io.File;
 import java.nio.ByteBuffer;
 
-public class AWSSecretsManagerProcessor extends MessageProcessor {
+/**
+ * AWS Secrets Manager Processor for Axway API Gateway
+ * Handles the actual secret retrieval logic
+ */
+public class GetSecretValueProcessor extends MessageProcessor {
 	
 	// Selectors for dynamic field resolution (following Lambda pattern)
 	protected Selector<String> secretName;
@@ -57,7 +61,7 @@ public class AWSSecretsManagerProcessor extends MessageProcessor {
 	// Content body selector
 	private Selector<String> contentBody = new Selector<>("${content.body}", String.class);
 
-	public AWSSecretsManagerProcessor() {
+	public GetSecretValueProcessor() {
 	}
 
 	@Override

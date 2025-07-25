@@ -1,6 +1,6 @@
 # Release Guide
 
-This guide describes the automated release process for the `aws-lambda-apim-sdk` project, as implemented in the GitHub Actions workflow (`.github/workflows/build-multi-version.yml`).
+This guide describes the automated release process for the `aws-secretsmanager-apim-sdk` project, as implemented in the GitHub Actions workflow (`.github/workflows/build-multi-version.yml`).
 
 ## Overview
 
@@ -150,9 +150,9 @@ This release includes **8** commits with the following changes:
 
 ## Release Artifacts
 
-- **ZIP files**: One per Axway version, named `aws-lambda-apim-sdk-<version>-<axway-version>-<date>.zip`
+- **ZIP files**: One per Axway version, named `aws-secretsmanager-apim-sdk-<version>-<axway-version>-<date>.zip`
 - **Contents:**
-  - Main JAR (`aws-lambda-apim-sdk-*.jar`)
+  - Main JAR (`aws-secretsmanager-apim-sdk-*.jar`)
   - `dependencies/` (external Gradle dependencies)
   - `src/main/resources/fed/` and `src/main/resources/yaml/` (Policy Studio resources)
   - `install-linux.sh` (Linux install script)

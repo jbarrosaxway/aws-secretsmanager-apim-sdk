@@ -88,11 +88,11 @@ function Append-InternationalizationContent {
     }
 }
 
-# 1. Copy AWSSecretsManagerFilter.yaml
-$sourceFilter = Join-Path $YAML_SOURCE_DIR "META-INF\types\Entity\Filter\AWSFilter"
-$destFilter = Join-Path $POLICY_STUDIO_PROJECT "META-INF\types\Entity\Filter\AWSFilter"
+# 1. Copy GetSecretValueFilter.yaml
+$sourceFilter = Join-Path $YAML_SOURCE_DIR "META-INF\types\Entity\Filter\AWSFilter\GetSecretValueFilter.yaml"
+$destFilter = Join-Path $POLICY_STUDIO_PROJECT "META-INF\types\Entity\Filter\AWSFilter\GetSecretValueFilter.yaml"
 
-$filterSuccess = Copy-YamlFiles -SourcePath $sourceFilter -DestPath $destFilter -Description "AWSSecretsManagerFilter.yaml"
+$filterSuccess = Copy-YamlFiles -SourcePath $sourceFilter -DestPath $destFilter -Description "GetSecretValueFilter.yaml"
 
 # 2. Add content to Internationalization Default.yaml
 $sourceSystemFile = Join-Path $YAML_SOURCE_DIR "System\Internationalization Default.yaml"
@@ -128,7 +128,7 @@ if ($filterSuccess -and $systemSuccess) {
     Write-Host "- Configure the filter with the required parameters" -ForegroundColor White
     Write-Host ""
     Write-Host "📋 Copied files:" -ForegroundColor Yellow
-    Write-Host "- $destFilter\AWSSecretsManagerFilter.yaml" -ForegroundColor Gray
+    Write-Host "- $destFilter\GetSecretValueFilter.yaml" -ForegroundColor Gray
     Write-Host "- $destSystem\Internationalization Default.yaml" -ForegroundColor Gray
     Write-Host ""
     Write-Host "💡 Tip: Adjust the `$POLICY_STUDIO_PROJECT variable in the script if your project is in another location" -ForegroundColor Cyan

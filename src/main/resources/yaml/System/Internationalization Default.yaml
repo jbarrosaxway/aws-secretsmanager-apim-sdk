@@ -1,6 +1,6 @@
 - type: InternationalizationFilter
   fields:
-    type: AWSSecretsManagerFilter
+    type: GetSecretValueFilter
   logging:
     fatal: "Error in the AWS Secrets Manager filter. Error: ${circuit.exception}"
     failure: "Failed in the AWS Secrets Manager filter"

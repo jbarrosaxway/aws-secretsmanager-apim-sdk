@@ -6,8 +6,13 @@ import com.vordel.config.ConfigContext;
 import com.vordel.es.EntityStoreException;
 import com.vordel.mime.Body;
 import com.vordel.mime.HeaderSet;
+import com.vordel.circuit.MessageProcessor;
 
-public class AWSSecretsManagerFilter extends DefaultFilter {
+/**
+ * AWS Secrets Manager Filter for Axway API Gateway
+ * Retrieves secrets from AWS Secrets Manager
+ */
+public class GetSecretValueFilter extends DefaultFilter {
 
 	@Override
 	protected final void setDefaultPropertyDefs() {
@@ -29,14 +34,16 @@ public class AWSSecretsManagerFilter extends DefaultFilter {
 	}
 
 	@Override
-	public Class<AWSSecretsManagerProcessor> getMessageProcessorClass() {
-		return AWSSecretsManagerProcessor.class;
+	public Class<? extends MessageProcessor> getMessageProcessorClass() {
+		return GetSecretValueProcessor.class;
 	}
 
-	public Class getConfigPanelClass() throws ClassNotFoundException {
-		// Avoid any compile or runtime dependencies on SWT and other UI
-		// libraries by lazily loading the class when required.
-		return Class.forName("com.axway.aws.secretsmanager.AWSSecretsManagerFilterUI");
+	public Class<?> getConfigPanelClass() {
+		try {
+			return Class.forName("com.axway.aws.secretsmanager.GetSecretValueFilterUI");
+		} catch (ClassNotFoundException e) {
+			throw new RuntimeException("UI class not found", e);
+		}
 	}
 
 } 

@@ -206,16 +206,16 @@ def processInternationalizationFile(def sourceFile, def destFile) {
     def sourceContent = sourceFile.text.trim()
     def destContent = destFile.exists() ? destFile.text : ""
     
-    // Check if AWSSecretsManagerFilter already exists in the file
-    if (destContent.contains("type: AWSSecretsManagerFilter")) {
-        println "🔄 AWSSecretsManagerFilter already exists. Updating section..."
+    // Check if GetSecretValueFilter already exists in the file
+    if (destContent.contains("type: GetSecretValueFilter")) {
+        println "🔄 GetSecretValueFilter already exists. Updating section..."
         
-        // Strategy: preserve other filters and only update AWSSecretsManagerFilter
+        // Strategy: preserve other filters and only update GetSecretValueFilter
         def lines = destContent.split('\n')
         def newLines = []
         def skipSection = false
         def inInternationalizationFilter = false
-        def foundAWSSecretsManagerFilter = false
+        def foundGetSecretValueFilter = false
         def outputNewContent = false
         
         for (int i = 0; i < lines.length; i++) {
@@ -230,15 +230,15 @@ def processInternationalizationFile(def sourceFile, def destFile) {
                 continue
             }
             
-            // If we are inside InternationalizationFilter, check if it contains AWSSecretsManagerFilter
-            if (inInternationalizationFilter && trimmedLine == "type: AWSSecretsManagerFilter") {
-                if (foundAWSSecretsManagerFilter) {
-                    // We already found an AWSSecretsManagerFilter section, skip this one
+            // If we are inside InternationalizationFilter, check if it contains GetSecretValueFilter
+            if (inInternationalizationFilter && trimmedLine == "type: GetSecretValueFilter") {
+                if (foundGetSecretValueFilter) {
+                    // We already found an GetSecretValueFilter section, skip this one
                     skipSection = true
                     continue
                 } else {
                     // First occurrence, skip and replace with new content
-                    foundAWSSecretsManagerFilter = true
+                    foundGetSecretValueFilter = true
                     skipSection = true
                     outputNewContent = true
                     continue
@@ -275,7 +275,7 @@ def processInternationalizationFile(def sourceFile, def destFile) {
         
         destFile.text = newLines.join('\n')
         
-        println "✅ AWSSecretsManagerFilter section updated: ${destFile.name}"
+        println "✅ GetSecretValueFilter section updated: ${destFile.name}"
         return true
     } else {
         // Add at the end if it does not exist
@@ -343,13 +343,13 @@ def createProjectStructure(def projectPath) {
 
 // Helper function to copy YAML files
 def copyYamlFiles(def sourceYamlDir, def metaInfDir, def systemDir) {
-    // Copy AWSSecretsManagerFilter.yaml
-    def sourceFilterYaml = new File(sourceYamlDir, "META-INF/types/Entity/Filter/AWSFilter/AWSSecretsManagerFilter.yaml")
-    def destFilterYaml = new File(metaInfDir, "AWSSecretsManagerFilter.yaml")
+    // Copy GetSecretValueFilter.yaml
+    def sourceFilterYaml = new File(sourceYamlDir, "META-INF/types/Entity/Filter/AWSFilter/GetSecretValueFilter.yaml")
+    def destFilterYaml = new File(metaInfDir, "GetSecretValueFilter.yaml")
     
     if (sourceFilterYaml.exists()) {
         destFilterYaml.text = sourceFilterYaml.text
-        println "✅ Copied: AWSSecretsManagerFilter.yaml"
+        println "✅ Copied: GetSecretValueFilter.yaml"
     } else {
         println "❌ File not found: ${sourceFilterYaml.absolutePath}"
     }
