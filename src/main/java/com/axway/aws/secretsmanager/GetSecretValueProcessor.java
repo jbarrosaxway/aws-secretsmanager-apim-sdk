@@ -127,7 +127,7 @@ public class GetSecretValueProcessor extends MessageProcessor {
 	}
 
 	/**
-	 * Creates the AWS Secrets Manager client builder with optimized configuration
+	 * Creates the AWS Secrets Manager client builder using AWSFactory pattern
 	 * 
 	 * @param ctx the configuration context
 	 * @param entity the entity containing configuration
@@ -138,29 +138,66 @@ public class GetSecretValueProcessor extends MessageProcessor {
 	private AWSSecretsManagerClientBuilder createSecretsManagerClientBuilder(ConfigContext ctx, Entity entity, Entity clientConfig) 
 			throws EntityStoreException {
 		
-		AWSSecretsManagerClientBuilder builder = AWSSecretsManagerClientBuilder.standard();
-		
-		// Set region with null safety
-		String regionValue = entity.getStringValue("secretRegion");
-		if (regionValue != null && !regionValue.trim().isEmpty()) {
-			builder.withRegion(regionValue);
-		} else {
-			builder.withRegion("us-east-1"); // Default region
+		// Use AWSFactory pattern similar to SendToS3BucketProcessor
+		try {
+			// Get credentials via AWSFactory
+			AWSCredentialsProvider credentialsProvider = createCredentialsProvider(ctx, entity);
+			
+			// Create client builder manually (AWSFactory doesn't have createSecretsManagerClientBuilder)
+			AWSSecretsManagerClientBuilder builder = AWSSecretsManagerClientBuilder.standard();
+			
+			// Set credentials
+			if (credentialsProvider != null) {
+				builder.withCredentials(credentialsProvider);
+			}
+			
+			// Set client configuration if available
+			if (clientConfig != null) {
+				ClientConfiguration config = createClientConfiguration(ctx, entity);
+				if (config != null) {
+					builder.withClientConfiguration(config);
+				}
+			}
+			
+			// Set region if specified
+			String regionValue = entity.getStringValue("secretRegion");
+			if (regionValue != null && !regionValue.trim().isEmpty()) {
+				builder.withRegion(regionValue);
+			} else {
+				builder.withRegion("us-east-1"); // Default region
+			}
+			
+			return builder;
+			
+		} catch (Exception e) {
+			Trace.error("Error creating Secrets Manager client builder: " + e.getMessage());
+			
+			// Fallback to manual creation if AWSFactory fails
+			Trace.info("Falling back to manual client builder creation");
+			AWSSecretsManagerClientBuilder builder = AWSSecretsManagerClientBuilder.standard();
+			
+			// Set region with null safety
+			String regionValue = entity.getStringValue("secretRegion");
+			if (regionValue != null && !regionValue.trim().isEmpty()) {
+				builder.withRegion(regionValue);
+			} else {
+				builder.withRegion("us-east-1"); // Default region
+			}
+			
+			// Set credentials provider
+			AWSCredentialsProvider credentialsProvider = createCredentialsProvider(ctx, entity);
+			if (credentialsProvider != null) {
+				builder.withCredentials(credentialsProvider);
+			}
+			
+			// Set client configuration
+			ClientConfiguration config = createClientConfiguration(ctx, entity);
+			if (config != null) {
+				builder.withClientConfiguration(config);
+			}
+			
+			return builder;
 		}
-		
-		// Set credentials provider
-		AWSCredentialsProvider credentialsProvider = createCredentialsProvider(ctx, entity);
-		if (credentialsProvider != null) {
-			builder.withCredentials(credentialsProvider);
-		}
-		
-		// Set client configuration
-		ClientConfiguration config = createClientConfiguration(ctx, entity);
-		if (config != null) {
-			builder.withClientConfiguration(config);
-		}
-		
-		return builder;
 	}
 
 	/**
