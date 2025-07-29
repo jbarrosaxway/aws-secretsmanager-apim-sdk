@@ -2,6 +2,8 @@ plugins {
     id 'java'
 }
 
+// Teste de build - comentário adicionado para verificar se o build funciona
+// Trigger GitHub Actions build
 group 'com.axway'
 version '1.0.16'
 sourceCompatibility = 1.8
