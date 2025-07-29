@@ -228,35 +228,38 @@ public class GetSecretValueProcessor extends MessageProcessor {
 	private ClientConfiguration createClientConfiguration(ConfigContext ctx, Entity entity) throws EntityStoreException {
 		ClientConfiguration clientConfig = new ClientConfiguration();
 		
-		if (entity == null) {
+		// Get the client configuration entity
+		Entity clientConfigEntity = ctx.getEntity(entity.getReferenceValue("clientConfiguration"));
+		
+		if (clientConfigEntity == null) {
 			Trace.debug("Using empty default ClientConfiguration");
 			return clientConfig;
 		}
 		
 		// Apply configuration settings using optimized helper methods
-		setIntegerConfig(clientConfig, entity, "connectionTimeout", ClientConfiguration::setConnectionTimeout);
-		setIntegerConfig(clientConfig, entity, "maxConnections", ClientConfiguration::setMaxConnections);
-		setIntegerConfig(clientConfig, entity, "maxErrorRetry", ClientConfiguration::setMaxErrorRetry);
-		setIntegerConfig(clientConfig, entity, "socketTimeout", ClientConfiguration::setSocketTimeout);
-		setIntegerConfig(clientConfig, entity, "proxyPort", ClientConfiguration::setProxyPort);
-		setIntegerConfig(clientConfig, entity, "socketSendBufferSizeHint", 
+		setIntegerConfig(clientConfig, clientConfigEntity, "connectionTimeout", ClientConfiguration::setConnectionTimeout);
+		setIntegerConfig(clientConfig, clientConfigEntity, "maxConnections", ClientConfiguration::setMaxConnections);
+		setIntegerConfig(clientConfig, clientConfigEntity, "maxErrorRetry", ClientConfiguration::setMaxErrorRetry);
+		setIntegerConfig(clientConfig, clientConfigEntity, "socketTimeout", ClientConfiguration::setSocketTimeout);
+		setIntegerConfig(clientConfig, clientConfigEntity, "proxyPort", ClientConfiguration::setProxyPort);
+		setIntegerConfig(clientConfig, clientConfigEntity, "socketSendBufferSizeHint", 
 			(config, value) -> {
-				Integer receiveHint = getIntegerValue(entity, "socketReceiveBufferSizeHint");
+				Integer receiveHint = getIntegerValue(clientConfigEntity, "socketReceiveBufferSizeHint");
 				if (receiveHint != null) {
 					config.setSocketBufferSizeHints(value, receiveHint);
 				}
 			});
 		
-		setStringConfig(clientConfig, entity, "protocol", 
+		setStringConfig(clientConfig, clientConfigEntity, "protocol", 
 			(config, value) -> config.setProtocol(Protocol.valueOf(value)));
-		setStringConfig(clientConfig, entity, "userAgent", ClientConfiguration::setUserAgent);
-		setStringConfig(clientConfig, entity, "proxyHost", ClientConfiguration::setProxyHost);
-		setStringConfig(clientConfig, entity, "proxyUsername", ClientConfiguration::setProxyUsername);
-		setStringConfig(clientConfig, entity, "proxyDomain", ClientConfiguration::setProxyDomain);
-		setStringConfig(clientConfig, entity, "proxyWorkstation", ClientConfiguration::setProxyWorkstation);
+		setStringConfig(clientConfig, clientConfigEntity, "userAgent", ClientConfiguration::setUserAgent);
+		setStringConfig(clientConfig, clientConfigEntity, "proxyHost", ClientConfiguration::setProxyHost);
+		setStringConfig(clientConfig, clientConfigEntity, "proxyUsername", ClientConfiguration::setProxyUsername);
+		setStringConfig(clientConfig, clientConfigEntity, "proxyDomain", ClientConfiguration::setProxyDomain);
+		setStringConfig(clientConfig, clientConfigEntity, "proxyWorkstation", ClientConfiguration::setProxyWorkstation);
 		
 		// Handle encrypted proxy password
-		setEncryptedProxyPassword(clientConfig, ctx, entity);
+		setEncryptedProxyPassword(clientConfig, ctx, clientConfigEntity);
 		
 		return clientConfig;
 	}
@@ -287,19 +290,9 @@ public class GetSecretValueProcessor extends MessageProcessor {
 	 */
 	private void setStringConfig(ClientConfiguration config, Entity entity, String fieldName, 
 			java.util.function.BiConsumer<ClientConfiguration, String> setter) {
-		try {
-			// Check if the field exists in the entity
-			if (entity == null || !entity.containsKey(fieldName)) {
-				return;
-			}
-			
-			String value = entity.getStringValue(fieldName);
-			if (value != null && !value.trim().isEmpty()) {
-				setter.accept(config, value);
-			}
-		} catch (Exception e) {
-			// Field doesn't exist or other error, skip
-			Trace.debug("Field " + fieldName + " not found or not accessible: " + e.getMessage());
+		String value = entity.getStringValue(fieldName);
+		if (value != null && !value.trim().isEmpty()) {
+			setter.accept(config, value);
 		}
 	}
 
@@ -311,23 +304,13 @@ public class GetSecretValueProcessor extends MessageProcessor {
 	 * @return the integer value or null if not found/invalid
 	 */
 	private Integer getIntegerValue(Entity entity, String fieldName) {
-		try {
-			// Check if the field exists in the entity
-			if (entity == null || !entity.containsKey(fieldName)) {
-				return null;
+		String valueStr = entity.getStringValue(fieldName);
+		if (valueStr != null && !valueStr.trim().isEmpty()) {
+			try {
+				return Integer.valueOf(valueStr.trim());
+			} catch (NumberFormatException e) {
+				Trace.error("Invalid " + fieldName + " value: " + valueStr);
 			}
-			
-			String valueStr = entity.getStringValue(fieldName);
-			if (valueStr != null && !valueStr.trim().isEmpty()) {
-				try {
-					return Integer.valueOf(valueStr.trim());
-				} catch (NumberFormatException e) {
-					Trace.error("Invalid " + fieldName + " value: " + valueStr);
-				}
-			}
-		} catch (Exception e) {
-			// Field doesn't exist or other error, return null
-			Trace.debug("Field " + fieldName + " not found or not accessible: " + e.getMessage());
 		}
 		return null;
 	}
@@ -341,20 +324,12 @@ public class GetSecretValueProcessor extends MessageProcessor {
 	 */
 	private void setEncryptedProxyPassword(ClientConfiguration config, ConfigContext ctx, Entity entity) {
 		try {
-			// Check if the field exists in the entity
-			if (entity == null || !entity.containsKey("proxyPassword")) {
-				return;
-			}
-			
 			byte[] proxyPasswordBytes = ctx.getCipher().decrypt(entity.getEncryptedValue("proxyPassword"));
 			if (proxyPasswordBytes != null) {
 				config.setProxyPassword(new String(proxyPasswordBytes, StandardCharsets.UTF_8));
 			}
 		} catch (GeneralSecurityException e) {
 			Trace.error("Error decrypting proxy password: " + e.getMessage());
-		} catch (Exception e) {
-			// Field doesn't exist or other error, skip
-			Trace.debug("Proxy password field not found or not accessible: " + e.getMessage());
 		}
 	}
 
@@ -487,69 +462,69 @@ public class GetSecretValueProcessor extends MessageProcessor {
 			int maxRetriesInt, int retryDelayInt, Message message) {
 		
 		Exception lastException = null;
-		
-		for (int attempt = 1; attempt <= maxRetriesInt; attempt++) {
-			try {
+			
+			for (int attempt = 1; attempt <= maxRetriesInt; attempt++) {
+				try {
 				Trace.debug("Attempt " + attempt + " of " + maxRetriesInt);
-				
+					
 				Trace.debug("Attempting to get secret: " + secretNameValue + " (attempt " + attempt + ")");
-				
-				GetSecretValueRequest request = new GetSecretValueRequest()
-					.withSecretId(secretNameValue);
-				
+					
+					GetSecretValueRequest request = new GetSecretValueRequest()
+						.withSecretId(secretNameValue);
+					
 				GetSecretValueResult result = secretsManager.getSecretValue(request);
-				
-				// Success - process result
-				processSecretResult(message, result);
-				Trace.info("Successfully retrieved secret: " + secretNameValue);
-				return true;
-				
-			} catch (ResourceNotFoundException e) {
-				Trace.error("Secret not found: " + secretNameValue);
-				message.put("aws.secretsmanager.error", "Secret not found: " + secretNameValue);
-				message.put("aws.secretsmanager.status.code", "404");
-				return false;
-				
-			} catch (InvalidRequestException | InvalidParameterException e) {
-				Trace.error("Invalid request for secret: " + secretNameValue + " - " + e.getMessage());
-				message.put("aws.secretsmanager.error", "Invalid request: " + e.getMessage());
-				message.put("aws.secretsmanager.status.code", "400");
-				return false;
-				
-			} catch (DecryptionFailureException e) {
-				Trace.error("Decryption failure for secret: " + secretNameValue + " - " + e.getMessage());
-				message.put("aws.secretsmanager.error", "Decryption failure: " + e.getMessage());
-				message.put("aws.secretsmanager.status.code", "500");
-				return false;
-				
-			} catch (InternalServiceErrorException e) {
-				lastException = e;
+					
+					// Success - process result
+					processSecretResult(message, result);
+					Trace.info("Successfully retrieved secret: " + secretNameValue);
+					return true;
+					
+				} catch (ResourceNotFoundException e) {
+					Trace.error("Secret not found: " + secretNameValue);
+					message.put("aws.secretsmanager.error", "Secret not found: " + secretNameValue);
+					message.put("aws.secretsmanager.status.code", "404");
+					return false;
+					
+				} catch (InvalidRequestException | InvalidParameterException e) {
+					Trace.error("Invalid request for secret: " + secretNameValue + " - " + e.getMessage());
+					message.put("aws.secretsmanager.error", "Invalid request: " + e.getMessage());
+					message.put("aws.secretsmanager.status.code", "400");
+					return false;
+					
+				} catch (DecryptionFailureException e) {
+					Trace.error("Decryption failure for secret: " + secretNameValue + " - " + e.getMessage());
+					message.put("aws.secretsmanager.error", "Decryption failure: " + e.getMessage());
+					message.put("aws.secretsmanager.status.code", "500");
+					return false;
+					
+				} catch (InternalServiceErrorException e) {
+					lastException = e;
 				Trace.debug("Internal service error for secret: " + secretNameValue + " (attempt " + attempt + ") - " + e.getMessage());
-				
-				if (attempt < maxRetriesInt) {
+					
+					if (attempt < maxRetriesInt) {
+					sleepWithInterruptHandling(retryDelayInt);
+					}
+					
+				} catch (Exception e) {
+					lastException = e;
+				Trace.debug("Unexpected error for secret: " + secretNameValue + " (attempt " + attempt + ") - " + e.getMessage());
+					
+					if (attempt < maxRetriesInt) {
 					sleepWithInterruptHandling(retryDelayInt);
 				}
-				
-			} catch (Exception e) {
-				lastException = e;
-				Trace.debug("Unexpected error for secret: " + secretNameValue + " (attempt " + attempt + ") - " + e.getMessage());
-				
-				if (attempt < maxRetriesInt) {
-					sleepWithInterruptHandling(retryDelayInt);
 				}
 			}
-		}
-		
-		// If we get here, all attempts failed
-		String errorMsg = "Failed to retrieve secret after " + maxRetriesInt + " attempts";
-		if (lastException != null) {
-			errorMsg += ": " + lastException.getMessage();
-		}
-		
-		Trace.error(errorMsg);
-		message.put("aws.secretsmanager.error", errorMsg);
-		message.put("aws.secretsmanager.status.code", "500");
-		return false;
+			
+			// If we get here, all attempts failed
+			String errorMsg = "Failed to retrieve secret after " + maxRetriesInt + " attempts";
+			if (lastException != null) {
+				errorMsg += ": " + lastException.getMessage();
+			}
+			
+			Trace.error(errorMsg);
+			message.put("aws.secretsmanager.error", errorMsg);
+			message.put("aws.secretsmanager.status.code", "500");
+			return false;
 	}
 
 	/**
