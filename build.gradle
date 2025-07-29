@@ -8,11 +8,11 @@ sourceCompatibility = 1.8
 
 jar {
     archiveBaseName = 'aws-secretsmanager-apim-sdk'
-    archiveVersion = '1.0.11'
+    archiveVersion = version
     manifest {
         attributes(
             'Implementation-Title': 'AWS Secrets Manager APIM SDK',
-            'Implementation-Version': '1.0.11',
+            'Implementation-Version': version,
             'Built-By': System.getProperty('user.name'),
             'Built-Date': new Date(),
             'Built-JDK': System.getProperty('java.version')
@@ -165,7 +165,7 @@ task installLinux(type: Exec) {
     
     doFirst {
         println "🚀 Installing AWS Secrets Manager filter on Linux..."
-        println "📁 JAR: build/libs/aws-secretsmanager-apim-sdk-1.0.11.jar"
+        println "📁 JAR: build/libs/aws-secretsmanager-apim-sdk-${version}.jar"
         println "📁 Gateway: ${axway_base}"
     }
 }
@@ -325,7 +325,7 @@ def showNextSteps() {
     println "1. Copy the JAR built on Linux to Windows"
     println "2. Open Policy Studio"
     println "3. Go to Window > Preferences > Runtime Dependencies"
-    println "4. Add the JAR: aws-secretsmanager-apim-sdk-1.0.11.jar"
+    println "4. Add the JAR: aws-secretsmanager-apim-sdk-${version}.jar"
     println "5. Restart Policy Studio with -clean"
     println "6. Search for 'AWS Secrets Manager Filter' in the palette"
 }
@@ -395,12 +395,12 @@ task buildJarLinux {
     
     doFirst {
         println "🔨 Building AWS Secrets Manager Filter JAR..."
-        println "📁 JAR: build/libs/aws-secretsmanager-apim-sdk-1.0.11.jar"
+        println "📁 JAR: build/libs/aws-secretsmanager-apim-sdk-${version}.jar"
         println "⚠️  Note: This task should be run only on Linux"
     }
     
     doLast {
-        def jarFile = new File("build/libs/aws-secretsmanager-apim-sdk-1.0.11.jar")
+        def jarFile = new File("build/libs/aws-secretsmanager-apim-sdk-${version}.jar")
         if (jarFile.exists()) {
             println "✅ JAR created successfully: ${jarFile.absolutePath}"
             println "📋 For Windows: Copy this JAR to the Windows environment"

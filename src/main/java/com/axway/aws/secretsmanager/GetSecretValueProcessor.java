@@ -53,37 +53,40 @@ import com.vordel.trace.Trace;
 public class GetSecretValueProcessor extends MessageProcessor {
 	
 	// Selectors for dynamic field resolution (thread-safe and immutable)
-	private final Selector<String> secretName;
-	private final Selector<String> secretRegion;
-	private final Selector<String> maxRetries;
-	private final Selector<String> retryDelay;
-	private final Selector<String> credentialType;
-	private final Selector<String> awsCredential;
-	private final Selector<String> clientConfiguration;
-	private final Selector<String> credentialsFilePath;
+	private Selector<String> secretName;
+	private Selector<String> secretRegion;
+	private Selector<String> maxRetries;
+	private Selector<String> retryDelay;
+	private Selector<String> credentialType;
+	private Selector<String> awsCredential;
+	private Selector<String> clientConfiguration;
+	private Selector<String> credentialsFilePath;
 	
 	// AWS Secrets Manager client builder (thread-safe)
-	private final AWSSecretsManagerClientBuilder secretsManagerClientBuilder;
+	private AWSSecretsManagerClientBuilder secretsManagerClientBuilder;
 	
 	// Content body selector
 	private final Selector<String> contentBody = new Selector<>("${content.body}", String.class);
 
 	/**
-	 * Private constructor to prevent instantiation
+	 * Default constructor required by Axway API Gateway
 	 */
-	private GetSecretValueProcessor() {
-		// Utility class - should not be instantiated directly
-		throw new UnsupportedOperationException("This class should not be instantiated directly");
+	public GetSecretValueProcessor() {
+		// Default constructor for Axway API Gateway instantiation
 	}
 
 	/**
-	 * Creates a new GetSecretValueProcessor with the specified configuration
+	 * Configures the processor with the specified context and entity
+	 * This method is called by Axway API Gateway during filter initialization
 	 * 
 	 * @param ctx the configuration context
 	 * @param entity the entity containing configuration
 	 * @throws EntityStoreException if configuration cannot be loaded
 	 */
-	public GetSecretValueProcessor(ConfigContext ctx, Entity entity) throws EntityStoreException {
+	@Override
+	public void filterAttached(ConfigContext ctx, Entity entity) throws EntityStoreException {
+		super.filterAttached(ctx, entity);
+		
 		// Initialize selectors for all fields with proper null safety
 		this.secretName = new Selector<String>(entity.getStringValue("secretName"), String.class);
 		this.secretRegion = new Selector<String>(entity.getStringValue("secretRegion"), String.class);

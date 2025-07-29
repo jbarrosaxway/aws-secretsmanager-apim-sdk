@@ -7,20 +7,24 @@
 # For Windows, use: install-filter-windows.ps1 or install-filter-windows.cmd
 
 AXWAY_DIR="/opt/axway/Axway-7.7.0.20240830"
-JAR_FILE="build/libs/aws-secretsmanager-apim-sdk-1.0.11.jar"
+# Get the JAR file name dynamically
+JAR_FILE=$(find build/libs -name "aws-secretsmanager-apim-sdk-*.jar" | head -1)
+
+if [ -z "$JAR_FILE" ]; then
+    echo "❌ JAR file not found. Please run './gradlew build' first."
+    exit 1
+fi
+
 EXT_LIB_DIR="$AXWAY_DIR/apigateway/groups/group-2/instance-1/ext/lib"
 
-echo "=== AWS Secrets Manager Filter Installation for Axway API Gateway ==="
+echo "========================================"
+echo "AWS Secrets Manager APIM SDK - Linux Installer"
+echo "========================================"
+echo
+
 echo "Axway directory: $AXWAY_DIR"
 echo "JAR: $JAR_FILE"
 echo ""
-
-# Check if the JAR exists
-if [ ! -f "$JAR_FILE" ]; then
-    echo "❌ Error: JAR not found: $JAR_FILE"
-    echo "Run './gradlew build' first"
-    exit 1
-fi
 
 # Check if the Axway directory exists
 if [ ! -d "$AXWAY_DIR" ]; then
@@ -54,15 +58,11 @@ ls -la "$EXT_LIB_DIR"/*.jar
 echo ""
 echo "=== Installation Completed ==="
 echo ""
-echo "📝 Next steps:"
-echo "1. Restart Axway API Gateway"
-echo "2. In Policy Studio, go to Window > Preferences > Runtime Dependencies"
-echo "3. Add the JAR: $EXT_LIB_DIR/aws-secretsmanager-apim-sdk-1.0.11.jar"
-echo "4. Restart Policy Studio with the -clean option"
-echo "5. The 'AWS Secrets Manager Filter' will be available in the filter palette"
+echo "✅ Installation completed successfully!"
 echo ""
-echo "🔧 To check if the filter is working:"
-echo "- Open Policy Studio"
-echo "- Create a new policy"
-echo "- Search for 'AWS Secrets Manager' in the filter palette"
-echo "- Configure the filter with the required parameters" 
+echo "📋 Next steps:"
+echo "1. Restart the Axway API Gateway"
+echo "2. Open Policy Studio"
+echo "3. Add the JAR: $EXT_LIB_DIR/$(basename "$JAR_FILE")"
+echo "4. Restart Policy Studio with -clean"
+echo "5. Search for 'AWS Secrets Manager Filter' in the palette" 

@@ -72,16 +72,18 @@ docker run --rm \
 
 # Check if the JAR was created
 echo ""
-echo "🔍 Checking build result..."
+echo "📋 Checking build result..."
 
-if [ -f "build/libs/aws-secretsmanager-apim-sdk-1.0.11.jar" ]; then
+# Get the JAR file name dynamically
+JAR_FILE=$(find build/libs -name "aws-secretsmanager-apim-sdk-*.jar" | head -1)
+
+if [ -f "$JAR_FILE" ]; then
     echo "✅ JAR created successfully!"
-    echo "📁 File: build/libs/aws-secretsmanager-apim-sdk-1.0.11.jar"
-    echo "📏 Size: $(du -h build/libs/aws-secretsmanager-apim-sdk-1.0.11.jar | cut -f1)"
-    
+    echo "📁 File: $JAR_FILE"
+    echo "📏 Size: $(du -h "$JAR_FILE" | cut -f1)"
     echo ""
-    echo "📋 JAR contents:"
-    jar -tf build/libs/aws-secretsmanager-apim-sdk-1.0.11.jar | head -20
+    echo "📋 JAR contents (first 20 entries):"
+    jar -tf "$JAR_FILE" | head -20
     
     echo ""
     echo "🎉 Build completed successfully!"

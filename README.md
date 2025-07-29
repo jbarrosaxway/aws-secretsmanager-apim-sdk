@@ -239,7 +239,7 @@ The project uses the image for automated build:
 
 2. **Copy JAR to Windows:**
    ```bash
-   # Copy the file: build/libs/aws-secretsmanager-apim-sdk-1.0.11.jar
+   # Copy the file: build/libs/aws-secretsmanager-apim-sdk-<version>.jar
    # To the Windows environment
    ```
 
@@ -323,7 +323,7 @@ docs/
 2. **Configure Policy Studio:**
    - Open Policy Studio
    - Go to **Window > Preferences > Runtime Dependencies**
-   - Add the JAR: `/opt/axway/Axway-7.7.0.20240830/apigateway/groups/group-2/instance-1/ext/lib/aws-secretsmanager-apim-sdk-1.0.11.jar`
+   - Add the JAR: `/opt/axway/Axway-7.7.0.20240830/apigateway/groups/group-2/instance-1/ext/lib/aws-secretsmanager-apim-sdk-<version>.jar`
    - Restart Policy Studio with `-clean`
 
 ### Windows
@@ -347,7 +347,7 @@ docs/
 4. **Configure Policy Studio:**
    - Open Policy Studio
    - Go to **Window > Preferences > Runtime Dependencies**
-   - Add the JAR: `aws-secretsmanager-apim-sdk-1.0.11.jar`
+   - Add the JAR: `aws-secretsmanager-apim-sdk-<version>.jar`
    - Restart Policy Studio with `-clean`
 
 ## AWS Configuration
@@ -587,7 +587,7 @@ The project includes automated workflows that use Docker for build:
 
 #### **Main JAR**
 ```
-aws-secretsmanager-apim-sdk-1.0.11.jar
+aws-secretsmanager-apim-sdk-<version>.jar
 ├── AWS Secrets Manager Java Filter
 ├── Policy Studio UI classes
 ├── AWS SDK dependencies
