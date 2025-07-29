@@ -8,11 +8,11 @@ sourceCompatibility = 1.8
 
 jar {
     archiveBaseName = 'aws-secretsmanager-apim-sdk'
-    archiveVersion = '1.0.11'
+    archiveVersion = version
     manifest {
         attributes(
             'Implementation-Title': 'AWS Secrets Manager APIM SDK',
-            'Implementation-Version': '1.0.11',
+            'Implementation-Version': version,
             'Built-By': System.getProperty('user.name'),
             'Built-Date': new Date(),
             'Built-JDK': System.getProperty('java.version')
