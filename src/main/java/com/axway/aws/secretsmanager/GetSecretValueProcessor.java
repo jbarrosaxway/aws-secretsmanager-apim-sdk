@@ -287,9 +287,19 @@ public class GetSecretValueProcessor extends MessageProcessor {
 	 */
 	private void setStringConfig(ClientConfiguration config, Entity entity, String fieldName, 
 			java.util.function.BiConsumer<ClientConfiguration, String> setter) {
-		String value = entity.getStringValue(fieldName);
-		if (value != null && !value.trim().isEmpty()) {
-			setter.accept(config, value);
+		try {
+			// Check if the field exists in the entity
+			if (entity == null || !entity.containsKey(fieldName)) {
+				return;
+			}
+			
+			String value = entity.getStringValue(fieldName);
+			if (value != null && !value.trim().isEmpty()) {
+				setter.accept(config, value);
+			}
+		} catch (Exception e) {
+			// Field doesn't exist or other error, skip
+			Trace.debug("Field " + fieldName + " not found or not accessible: " + e.getMessage());
 		}
 	}
 
@@ -301,13 +311,23 @@ public class GetSecretValueProcessor extends MessageProcessor {
 	 * @return the integer value or null if not found/invalid
 	 */
 	private Integer getIntegerValue(Entity entity, String fieldName) {
-		String valueStr = entity.getStringValue(fieldName);
-		if (valueStr != null && !valueStr.trim().isEmpty()) {
-			try {
-				return Integer.valueOf(valueStr.trim());
-			} catch (NumberFormatException e) {
-				Trace.error("Invalid " + fieldName + " value: " + valueStr);
+		try {
+			// Check if the field exists in the entity
+			if (entity == null || !entity.containsKey(fieldName)) {
+				return null;
 			}
+			
+			String valueStr = entity.getStringValue(fieldName);
+			if (valueStr != null && !valueStr.trim().isEmpty()) {
+				try {
+					return Integer.valueOf(valueStr.trim());
+				} catch (NumberFormatException e) {
+					Trace.error("Invalid " + fieldName + " value: " + valueStr);
+				}
+			}
+		} catch (Exception e) {
+			// Field doesn't exist or other error, return null
+			Trace.debug("Field " + fieldName + " not found or not accessible: " + e.getMessage());
 		}
 		return null;
 	}
@@ -321,12 +341,20 @@ public class GetSecretValueProcessor extends MessageProcessor {
 	 */
 	private void setEncryptedProxyPassword(ClientConfiguration config, ConfigContext ctx, Entity entity) {
 		try {
+			// Check if the field exists in the entity
+			if (entity == null || !entity.containsKey("proxyPassword")) {
+				return;
+			}
+			
 			byte[] proxyPasswordBytes = ctx.getCipher().decrypt(entity.getEncryptedValue("proxyPassword"));
 			if (proxyPasswordBytes != null) {
 				config.setProxyPassword(new String(proxyPasswordBytes, StandardCharsets.UTF_8));
 			}
 		} catch (GeneralSecurityException e) {
 			Trace.error("Error decrypting proxy password: " + e.getMessage());
+		} catch (Exception e) {
+			// Field doesn't exist or other error, skip
+			Trace.debug("Proxy password field not found or not accessible: " + e.getMessage());
 		}
 	}
 
