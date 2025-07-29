@@ -5,7 +5,7 @@ plugins {
 // Teste de build - comentário adicionado para verificar se o build funciona
 // Trigger GitHub Actions build
 group 'com.axway'
-version '1.0.14'
+version '1.0.15'
 sourceCompatibility = 1.8
 
 jar {
