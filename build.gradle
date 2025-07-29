@@ -2,6 +2,7 @@ plugins {
     id 'java'
 }
 
+// Teste de build - comentário adicionado para verificar se o build funciona
 group 'com.axway'
 version '1.0.14'
 sourceCompatibility = 1.8
