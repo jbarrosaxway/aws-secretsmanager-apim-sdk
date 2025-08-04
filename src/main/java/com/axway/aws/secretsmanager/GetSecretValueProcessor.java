@@ -5,9 +5,10 @@ import com.amazonaws.ClientConfiguration;
 import com.amazonaws.Protocol;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSCredentialsProvider;
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
-import com.amazonaws.auth.EC2ContainerCredentialsProviderWrapper;
+import com.amazonaws.auth.WebIdentityTokenCredentialsProvider;
 import com.amazonaws.services.secretsmanager.AWSSecretsManager;
 import com.amazonaws.services.secretsmanager.AWSSecretsManagerClientBuilder;
 import com.amazonaws.services.secretsmanager.model.GetSecretValueRequest;
@@ -30,7 +31,15 @@ import com.vordel.trace.Trace;
 
 /**
  * AWS Secrets Manager Processor for Axway API Gateway
- * Handles the actual secret retrieval logic
+ * 
+ * IAM Role Configuration:
+ * - "iam" credential type: Uses WebIdentityTokenCredentialsProvider only
+ *   - AWS SDK automatically handles IRSA (IAM Roles for Service Accounts) and EC2 Instance Profile
+ *   - Reads environment variables (AWS_WEB_IDENTITY_TOKEN_FILE, AWS_ROLE_ARN) internally
+ *   - Supports both ServiceAccount tokens and EC2 instance metadata
+ * 
+ * - "file" credential type: Uses ProfileCredentialsProvider with specified file
+ * - "local" credential type: Uses AWSFactory for explicit credentials
  */
 public class GetSecretValueProcessor extends MessageProcessor {
 	
@@ -85,46 +94,57 @@ public class GetSecretValueProcessor extends MessageProcessor {
 		Trace.info("Client Config Entity: " + (clientConfig != null ? "configured" : "default"));
 	}
 
+	/**
+	 * Creates Secrets Manager client builder following Lambda pattern exactly
+	 */
 	private AWSSecretsManagerClientBuilder getSecretsManagerClientBuilder(ConfigContext ctx, Entity entity, Entity clientConfig) 
 			throws EntityStoreException {
 		
-		AWSSecretsManagerClientBuilder builder = AWSSecretsManagerClientBuilder.standard();
-		
-		// Set region
-		String regionValue = entity.getStringValue("secretRegion");
-		if (regionValue != null && !regionValue.trim().isEmpty()) {
-			builder.withRegion(regionValue);
-		} else {
-			builder.withRegion("us-east-1"); // Default region
-		}
-		
-		// Set credentials provider
+		// Get credentials provider based on configuration
 		AWSCredentialsProvider credentialsProvider = getCredentialsProvider(ctx, entity);
-		if (credentialsProvider != null) {
-			builder.withCredentials(credentialsProvider);
-		}
 		
-		// Set client configuration
-		ClientConfiguration config = createClientConfiguration(ctx, entity);
-		if (config != null) {
-			builder.withClientConfiguration(config);
+		// Create client builder with credentials and client configuration (following Lambda pattern)
+		AWSSecretsManagerClientBuilder builder = AWSSecretsManagerClientBuilder.standard()
+			.withCredentials(credentialsProvider);
+		
+		// Apply client configuration if available (following Lambda pattern exactly)
+		if (clientConfig != null) {
+			ClientConfiguration clientConfiguration = createClientConfiguration(ctx, clientConfig);
+			builder.withClientConfiguration(clientConfiguration);
+			Trace.info("Applied custom client configuration");
+		} else {
+			Trace.debug("Using default client configuration");
 		}
 		
 		return builder;
 	}
-
+	
+	/**
+	 * Gets the appropriate credentials provider based on configuration
+	 */
 	private AWSCredentialsProvider getCredentialsProvider(ConfigContext ctx, Entity entity) throws EntityStoreException {
 		String credentialTypeValue = credentialType.getLiteral();
 		Trace.info("=== Credentials Provider Debug ===");
 		Trace.info("Credential Type Value: " + credentialTypeValue);
 		
 		if ("iam".equals(credentialTypeValue)) {
-			// Use IAM Role (EC2 Instance Profile or ECS Task Role)
-			Trace.info("Using IAM Role credentials (Instance Profile/Task Role)");
-			return new EC2ContainerCredentialsProviderWrapper();
+			// Use IAM Role - WebIdentityTokenCredentialsProvider only
+			Trace.info("Using IAM Role credentials - WebIdentityTokenCredentialsProvider");
+			Trace.info("Credential Type Value: " + credentialTypeValue);
+			
+			// Debug IRSA configuration
+			Trace.info("=== IRSA Debug ===");
+			Trace.info("AWS_WEB_IDENTITY_TOKEN_FILE: " + System.getenv("AWS_WEB_IDENTITY_TOKEN_FILE"));
+			Trace.info("AWS_ROLE_ARN: " + System.getenv("AWS_ROLE_ARN"));
+			Trace.info("AWS_REGION: " + System.getenv("AWS_REGION"));
+			
+			// Use WebIdentityTokenCredentialsProvider for IAM role
+			Trace.info("✅ Using WebIdentityTokenCredentialsProvider for IAM role");
+			return new WebIdentityTokenCredentialsProvider();
 		} else if ("file".equals(credentialTypeValue)) {
 			// Use credentials file
 			Trace.info("Credentials Type is 'file', checking credentialsFilePath...");
+			Trace.info("Credential Type Value: " + credentialTypeValue);
 			String filePath = credentialsFilePath.getLiteral();
 			Trace.info("File Path: " + filePath);
 			Trace.info("File Path is null: " + (filePath == null));
@@ -146,6 +166,7 @@ public class GetSecretValueProcessor extends MessageProcessor {
 		} else {
 			// Use explicit credentials via AWSFactory (following Lambda pattern)
 			Trace.info("Using explicit AWS credentials via AWSFactory");
+			Trace.info("Credential Type Value: " + credentialTypeValue);
 			try {
 				AWSCredentials awsCredentials = AWSFactory.getCredentials(ctx, entity);
 				Trace.info("AWSFactory.getCredentials() successful");
@@ -157,36 +178,54 @@ public class GetSecretValueProcessor extends MessageProcessor {
 			}
 		}
 	}
-
+	
+	/**
+	 * Creates ClientConfiguration from entity (following Lambda pattern exactly)
+	 */
 	private ClientConfiguration createClientConfiguration(ConfigContext ctx, Entity entity) throws EntityStoreException {
 		ClientConfiguration clientConfig = new ClientConfiguration();
 		
-		// Apply configuration settings using optimized helper methods
+		if (entity == null) {
+			Trace.debug("using empty default ClientConfiguration");
+			return clientConfig;
+		}
+		
+		// Apply configuration settings with optimized single access
 		setIntegerConfig(clientConfig, entity, "connectionTimeout", ClientConfiguration::setConnectionTimeout);
 		setIntegerConfig(clientConfig, entity, "maxConnections", ClientConfiguration::setMaxConnections);
 		setIntegerConfig(clientConfig, entity, "maxErrorRetry", ClientConfiguration::setMaxErrorRetry);
+		setStringConfig(clientConfig, entity, "protocol", (config, value) -> {
+			try {
+				config.setProtocol(Protocol.valueOf(value));
+			} catch (IllegalArgumentException e) {
+				Trace.error("Invalid protocol value: " + value);
+			}
+		});
 		setIntegerConfig(clientConfig, entity, "socketTimeout", ClientConfiguration::setSocketTimeout);
-		setIntegerConfig(clientConfig, entity, "proxyPort", ClientConfiguration::setProxyPort);
-		
-		setStringConfig(clientConfig, entity, "protocol", 
-			(config, value) -> config.setProtocol(Protocol.valueOf(value)));
 		setStringConfig(clientConfig, entity, "userAgent", ClientConfiguration::setUserAgent);
 		setStringConfig(clientConfig, entity, "proxyHost", ClientConfiguration::setProxyHost);
+		setIntegerConfig(clientConfig, entity, "proxyPort", ClientConfiguration::setProxyPort);
 		setStringConfig(clientConfig, entity, "proxyUsername", ClientConfiguration::setProxyUsername);
+		setEncryptedConfig(clientConfig, ctx, entity, "proxyPassword");
 		setStringConfig(clientConfig, entity, "proxyDomain", ClientConfiguration::setProxyDomain);
 		setStringConfig(clientConfig, entity, "proxyWorkstation", ClientConfiguration::setProxyWorkstation);
 		
-		// Handle encrypted proxy password
-		setEncryptedProxyPassword(clientConfig, ctx, entity);
-		
-		// Handle socket buffer size hints
-		setSocketBufferSizeHints(clientConfig, entity);
+		// Handle socket buffer size hints (both must exist)
+		try {
+			Integer sendHint = entity.getIntegerValue("socketSendBufferSizeHint");
+			Integer receiveHint = entity.getIntegerValue("socketReceiveBufferSizeHint");
+			if (sendHint != null && receiveHint != null) {
+				clientConfig.setSocketBufferSizeHints(sendHint, receiveHint);
+			}
+		} catch (Exception e) {
+			// Both fields don't exist, skip silently
+		}
 		
 		return clientConfig;
 	}
-
+	
 	/**
-	 * Helper method to set integer configuration values
+	 * Optimized method to set integer configuration with single access
 	 */
 	private void setIntegerConfig(ClientConfiguration config, Entity entity, String fieldName, 
 			java.util.function.BiConsumer<ClientConfiguration, Integer> setter) {
@@ -196,12 +235,12 @@ public class GetSecretValueProcessor extends MessageProcessor {
 				setter.accept(config, value);
 			}
 		} catch (Exception e) {
-			// Field doesn't exist or is not accessible, skip silently
+			// Field doesn't exist, skip silently
 		}
 	}
-
+	
 	/**
-	 * Helper method to set string configuration values
+	 * Optimized method to set string configuration with single access
 	 */
 	private void setStringConfig(ClientConfiguration config, Entity entity, String fieldName, 
 			java.util.function.BiConsumer<ClientConfiguration, String> setter) {
@@ -211,39 +250,27 @@ public class GetSecretValueProcessor extends MessageProcessor {
 				setter.accept(config, value);
 			}
 		} catch (Exception e) {
-			// Field doesn't exist or is not accessible, skip silently
+			// Field doesn't exist, skip silently
 		}
 	}
-
+	
 	/**
-	 * Helper method to set encrypted proxy password
+	 * Optimized method to set encrypted configuration
 	 */
-	private void setEncryptedProxyPassword(ClientConfiguration config, ConfigContext ctx, Entity entity) {
+	private void setEncryptedConfig(ClientConfiguration config, ConfigContext ctx, Entity entity, String fieldName) {
 		try {
-			byte[] proxyPasswordBytes = ctx.getCipher().decrypt(entity.getEncryptedValue("proxyPassword"));
-			config.setProxyPassword(new String(proxyPasswordBytes));
+			byte[] encryptedBytes = ctx.getCipher().decrypt(entity.getEncryptedValue(fieldName));
+			config.setProxyPassword(new String(encryptedBytes));
 		} catch (GeneralSecurityException e) {
-			Trace.error("Error decrypting proxy password: " + e.getMessage());
+			Trace.error("Error decrypting " + fieldName + ": " + e.getMessage());
 		} catch (Exception e) {
-			// Field doesn't exist or is not accessible, skip silently
+			// Field doesn't exist, skip silently
 		}
 	}
-
+	
 	/**
-	 * Helper method to set socket buffer size hints
+	 * Creates AWSCredentialsProvider (following Lambda pattern)
 	 */
-	private void setSocketBufferSizeHints(ClientConfiguration config, Entity entity) {
-		try {
-			Integer sendHint = entity.getIntegerValue("socketSendBufferSizeHint");
-			Integer receiveHint = entity.getIntegerValue("socketReceiveBufferSizeHint");
-			if (sendHint != null && receiveHint != null) {
-				config.setSocketBufferSizeHints(sendHint, receiveHint);
-			}
-		} catch (Exception e) {
-			// Fields don't exist or are not accessible, skip silently
-		}
-	}
-
 	private AWSCredentialsProvider getAWSCredentialsProvider(final AWSCredentials awsCredentials) {
 		return new AWSCredentialsProvider() {
 			public AWSCredentials getCredentials() {
